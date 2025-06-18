@@ -4,9 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ToolHub Master - Professional Tools for Modern Workflows</title>
-    <meta name="description" content="Boost your productivity with our comprehensive suite of AI-powered tools. From content detection to PDF conversion, QR codes, and more - all in one platform.">
-    <meta name="keywords" content="productivity tools, AI content detector, PDF converter, QR code generator, URL shortener, password generator">
+    <meta name="description" content="Access 10+ professional tools including AI content detector, PDF converter, QR generator, and more. Get 15 free uses across all tools.">
+    <meta name="keywords" content="tools, AI detector, PDF converter, QR generator, URL shortener, plagiarism checker">
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
     
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-M68FKRBLX2"></script>
@@ -16,234 +18,289 @@
         gtag('js', new Date());
         gtag('config', 'G-M68FKRBLX2');
     </script>
-    
-    <!-- External Libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.3/qrcode.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/markdown-it@13.0.1/dist/markdown-it.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.0/dist/browser-image-compression.min.js"></script>
 </head>
 <body>
-    <div class="app-container">
-        <!-- Header -->
-        <header class="header">
-            <div class="container">
-                <div class="header__content">
-                    <div class="header__brand">
-                        <h1 class="header__title">ToolHub Master</h1>
-                        <p class="header__subtitle">Professional tools for modern workflows</p>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo-section">
+                    <h1 class="logo">ToolHub Master</h1>
+                    <p class="tagline">Professional tools for modern workflows</p>
+                </div>
+                <div class="header-actions">
+                    <div class="usage-counter">
+                        <span id="usageDisplay">15/15 uses remaining</span>
                     </div>
-                    <div class="header__actions">
-                        <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme">
-                            <span class="theme-toggle__icon">🌙</span>
-                        </button>
-                        <button id="upgradeBtn" class="btn btn--primary">Upgrade to Pro</button>
+                    <button id="themeToggle" class="btn btn--secondary">🌙</button>
+                    <div id="userSection" class="user-section hidden">
+                        <span id="userGreeting"></span>
+                        <button id="signOutBtn" class="btn btn--outline btn--sm">Sign Out</button>
                     </div>
+                    <button id="upgradeBtn" class="btn btn--primary">Upgrade to Pro</button>
                 </div>
             </div>
-        </header>
+        </div>
+    </header>
 
-        <!-- Main Content -->
-        <main class="main">
-            <div class="container">
-                <!-- Hero Section -->
-                <section class="hero">
-                    <div class="hero__content">
-                        <h2 class="hero__title">All-in-One Productivity Suite</h2>
-                        <p class="hero__subtitle">Streamline your workflow with our powerful collection of professional tools</p>
-                    </div>
-                </section>
+    <!-- Main Content -->
+    <main class="main">
+        <div class="container">
+            <!-- Hero Section -->
+            <section class="hero">
+                <h2>Access 10+ Professional Tools</h2>
+                <p>Get 15 free uses across all tools. Sign in for 5 additional uses!</p>
+            </section>
 
-                <!-- Tools Grid -->
-                <section class="tools-section">
-                    <div class="tools-grid" id="toolsGrid">
-                        <!-- Tools will be dynamically generated -->
+            <!-- Tools Grid -->
+            <section class="tools-grid">
+                <!-- AI Content Detector -->
+                <div class="tool-card" data-tool="ai-detector">
+                    <div class="tool-icon">🤖</div>
+                    <h3>AI Content Detector</h3>
+                    <p>Detect AI-generated text with 99% accuracy</p>
+                    <div class="tool-content">
+                        <textarea id="aiText" placeholder="Paste your text here to check if it's AI-generated..."></textarea>
+                        <button class="btn btn--primary tool-btn" onclick="runAIDetector()">Analyze Text</button>
+                        <div id="aiResult" class="tool-result"></div>
                     </div>
-                </section>
-            </div>
-        </main>
+                </div>
 
-        <!-- Footer -->
-        <footer class="footer">
-            <div class="container">
-                <div class="footer__content">
-                    <div class="footer__brand">
-                        <h3>ToolHub Master</h3>
-                        <p>© 2025 Aaryan Raj</p>
+                <!-- PDF Converter -->
+                <div class="tool-card" data-tool="pdf-converter">
+                    <div class="tool-icon">📄</div>
+                    <h3>PDF Converter Suite</h3>
+                    <p>Convert, compress, merge, and split PDFs</p>
+                    <div class="tool-content">
+                        <input type="file" id="pdfFile" accept=".pdf" multiple>
+                        <select id="pdfOperation">
+                            <option value="compress">Compress PDF</option>
+                            <option value="merge">Merge PDFs</option>
+                            <option value="split">Split PDF</option>
+                        </select>
+                        <button class="btn btn--primary tool-btn" onclick="runPDFConverter()">Process PDF</button>
+                        <div id="pdfResult" class="tool-result"></div>
                     </div>
-                    <div class="footer__links">
-                        <div class="footer__section">
-                            <h4>Contact</h4>
-                            <p>Email: <a href="mailto:aaryanraj269@gmail.com">aaryanraj269@gmail.com</a></p>
-                            <p>LinkedIn: <a href="https://www.linkedin.com/in/aaryan-raj/" target="_blank">Aaryan Raj</a></p>
+                </div>
+
+                <!-- QR Code Generator -->
+                <div class="tool-card" data-tool="qr-generator">
+                    <div class="tool-icon">⬜</div>
+                    <h3>QR Code Generator Pro</h3>
+                    <p>Create custom QR codes with analytics</p>
+                    <div class="tool-content">
+                        <input type="text" id="qrText" placeholder="Enter text or URL">
+                        <div class="qr-options">
+                            <input type="color" id="qrColor" value="#000000">
+                            <select id="qrSize">
+                                <option value="200">Small (200px)</option>
+                                <option value="300" selected>Medium (300px)</option>
+                                <option value="400">Large (400px)</option>
+                            </select>
                         </div>
-                        <div class="footer__section">
-                            <h4>Legal</h4>
-                            <a href="#" id="privacyPolicyLink">Privacy Policy</a>
-                            <a href="#" id="termsServiceLink">Terms of Service</a>
+                        <button class="btn btn--primary tool-btn" onclick="generateQR()">Generate QR Code</button>
+                        <div id="qrResult" class="tool-result"></div>
+                    </div>
+                </div>
+
+                <!-- Image Compressor -->
+                <div class="tool-card" data-tool="image-compressor">
+                    <div class="tool-icon">🖼️</div>
+                    <h3>Smart Image Compressor</h3>
+                    <p>Optimize images without quality loss</p>
+                    <div class="tool-content">
+                        <input type="file" id="imageFile" accept="image/*">
+                        <div class="compression-options">
+                            <label for="quality">Quality: <span id="qualityValue">80</span>%</label>
+                            <input type="range" id="quality" min="10" max="100" value="80">
+                        </div>
+                        <button class="btn btn--primary tool-btn" onclick="compressImage()">Compress Image</button>
+                        <div id="imageResult" class="tool-result"></div>
+                    </div>
+                </div>
+
+                <!-- URL Shortener -->
+                <div class="tool-card" data-tool="url-shortener">
+                    <div class="tool-icon">🔗</div>
+                    <h3>URL Shortener Plus</h3>
+                    <p>Shorten URLs with detailed analytics</p>
+                    <div class="tool-content">
+                        <input type="url" id="longUrl" placeholder="Enter your long URL here">
+                        <button class="btn btn--primary tool-btn" onclick="shortenURL()">Shorten URL</button>
+                        <div id="urlResult" class="tool-result"></div>
+                    </div>
+                </div>
+
+                <!-- Plagiarism Checker -->
+                <div class="tool-card" data-tool="plagiarism-checker">
+                    <div class="tool-icon">🔍</div>
+                    <h3>Plagiarism Checker</h3>
+                    <p>Detect duplicate content instantly</p>
+                    <div class="tool-content">
+                        <textarea id="plagiarismText" placeholder="Paste your text here to check for plagiarism..."></textarea>
+                        <button class="btn btn--primary tool-btn" onclick="checkPlagiarism()">Check Plagiarism</button>
+                        <div id="plagiarismResult" class="tool-result"></div>
+                    </div>
+                </div>
+
+                <!-- Text Summarizer -->
+                <div class="tool-card" data-tool="text-summarizer">
+                    <div class="tool-icon">📝</div>
+                    <h3>Text Summarizer</h3>
+                    <p>AI-powered content summarization</p>
+                    <div class="tool-content">
+                        <textarea id="summaryText" placeholder="Paste your text here to generate a summary..."></textarea>
+                        <select id="summaryLength">
+                            <option value="short">Short Summary</option>
+                            <option value="medium" selected>Medium Summary</option>
+                            <option value="long">Detailed Summary</option>
+                        </select>
+                        <button class="btn btn--primary tool-btn" onclick="summarizeText()">Summarize Text</button>
+                        <div id="summaryResult" class="tool-result"></div>
+                    </div>
+                </div>
+
+                <!-- Color Palette Generator -->
+                <div class="tool-card" data-tool="color-generator">
+                    <div class="tool-icon">🎨</div>
+                    <h3>Color Palette Generator</h3>
+                    <p>Extract beautiful color schemes</p>
+                    <div class="tool-content">
+                        <input type="file" id="colorImage" accept="image/*">
+                        <div class="color-options">
+                            <label for="colorCount">Colors: <span id="colorCountValue">5</span></label>
+                            <input type="range" id="colorCount" min="3" max="10" value="5">
+                        </div>
+                        <button class="btn btn--primary tool-btn" onclick="generatePalette()">Generate Palette</button>
+                        <div id="colorResult" class="tool-result"></div>
+                    </div>
+                </div>
+
+                <!-- Password Generator -->
+                <div class="tool-card" data-tool="password-generator">
+                    <div class="tool-icon">🔐</div>
+                    <h3>Password Generator</h3>
+                    <p>Create secure passwords instantly</p>
+                    <div class="tool-content">
+                        <div class="password-options">
+                            <label for="passwordLength">Length: <span id="passwordLengthValue">12</span></label>
+                            <input type="range" id="passwordLength" min="6" max="50" value="12">
+                            <div class="checkboxes">
+                                <label><input type="checkbox" id="includeUppercase" checked> Uppercase</label>
+                                <label><input type="checkbox" id="includeLowercase" checked> Lowercase</label>
+                                <label><input type="checkbox" id="includeNumbers" checked> Numbers</label>
+                                <label><input type="checkbox" id="includeSymbols" checked> Symbols</label>
+                            </div>
+                        </div>
+                        <button class="btn btn--primary tool-btn" onclick="generatePassword()">Generate Password</button>
+                        <div id="passwordResult" class="tool-result"></div>
+                    </div>
+                </div>
+
+                <!-- Markdown Editor -->
+                <div class="tool-card" data-tool="markdown-editor">
+                    <div class="tool-icon">✍️</div>
+                    <h3>Markdown Editor</h3>
+                    <p>Live editing with real-time preview</p>
+                    <div class="tool-content">
+                        <div class="markdown-editor">
+                            <div class="editor-pane">
+                                <textarea id="markdownInput" placeholder="# Welcome to Markdown Editor&#10;&#10;Start typing your markdown here..."></textarea>
+                            </div>
+                            <div class="preview-pane">
+                                <div id="markdownPreview" class="markdown-preview"></div>
+                            </div>
+                        </div>
+                        <div class="markdown-actions">
+                            <button class="btn btn--secondary" onclick="downloadMarkdown()">Download .md</button>
+                            <button class="btn btn--secondary" onclick="copyMarkdown()">Copy Text</button>
                         </div>
                     </div>
                 </div>
-            </div>
-        </footer>
-    </div>
+            </section>
+        </div>
+    </main>
 
-    <!-- Tool Modal -->
-    <div id="toolModal" class="modal">
-        <div class="modal__backdrop"></div>
-        <div class="modal__content">
-            <div class="modal__header">
-                <h2 id="modalTitle" class="modal__title">Tool Name</h2>
-                <button id="modalClose" class="modal__close">&times;</button>
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>ToolHub Master</h4>
+                    <p>Professional tools for modern workflows</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Legal</h4>
+                    <a href="#" onclick="showPrivacyPolicy()">Privacy Policy</a>
+                    <a href="#" onclick="showTermsOfService()">Terms of Service</a>
+                    <a href="#" onclick="showAbout()">About</a>
+                    <a href="#" onclick="showContact()">Contact</a>
+                </div>
+                <div class="footer-section">
+                    <h4>Contact</h4>
+                    <p>© 2025 Aaryan Raj</p>
+                    <a href="mailto:aaryanraj269@gmail.com">aaryanraj269@gmail.com</a>
+                    <a href="https://www.linkedin.com/in/aaryan-raj/" target="_blank">LinkedIn Profile</a>
+                </div>
             </div>
-            <div class="modal__body" id="modalBody">
-                <!-- Tool interface will be inserted here -->
+        </div>
+    </footer>
+
+    <!-- Sign In Modal -->
+    <div id="signInModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Sign In to Get 5 More Free Uses!</h2>
+            <p>Enter your email to unlock additional features</p>
+            <div class="form-group">
+                <input type="email" id="emailInput" placeholder="Enter your email address" class="form-control">
             </div>
+            <button id="signInBtn" class="btn btn--primary btn--full-width">Sign In</button>
+            <p class="modal-note">No password required. We'll remember you on this device.</p>
         </div>
     </div>
 
     <!-- Upgrade Modal -->
     <div id="upgradeModal" class="modal">
-        <div class="modal__backdrop"></div>
-        <div class="modal__content">
-            <div class="modal__header">
-                <h2 class="modal__title">Upgrade to Pro</h2>
-                <button id="upgradeModalClose" class="modal__close">&times;</button>
-            </div>
-            <div class="modal__body">
-                <div class="pricing-cards">
-                    <div class="pricing-card">
-                        <h3>Pro Plan</h3>
-                        <div class="pricing-card__price">$9.99<span>/month</span></div>
-                        <ul class="pricing-card__features">
-                            <li>✓ Unlimited tool usage</li>
-                            <li>✓ Priority support</li>
-                            <li>✓ No advertisements</li>
-                            <li>✓ Advanced features</li>
-                            <li>✓ Export capabilities</li>
-                        </ul>
-                        <button class="btn btn--primary btn--full-width">Choose Pro</button>
-                    </div>
-                    <div class="pricing-card pricing-card--featured">
-                        <h3>Business Plan</h3>
-                        <div class="pricing-card__price">$24.99<span>/month</span></div>
-                        <ul class="pricing-card__features">
-                            <li>✓ Everything in Pro</li>
-                            <li>✓ Team collaboration</li>
-                            <li>✓ API access</li>
-                            <li>✓ Custom branding</li>
-                            <li>✓ White-label options</li>
-                            <li>✓ Advanced analytics</li>
-                        </ul>
-                        <button class="btn btn--primary btn--full-width">Choose Business</button>
-                    </div>
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Upgrade to Pro</h2>
+            <p>Unlock unlimited access to all tools</p>
+            <div class="pricing-cards">
+                <div class="pricing-card">
+                    <h3>Pro</h3>
+                    <div class="price">$9.99<span>/month</span></div>
+                    <ul>
+                        <li>Unlimited tool usage</li>
+                        <li>Priority support</li>
+                        <li>Advanced features</li>
+                        <li>No ads</li>
+                    </ul>
+                    <button class="btn btn--primary btn--full-width" onclick="trackUpgrade('pro')">Choose Pro</button>
+                </div>
+                <div class="pricing-card featured">
+                    <h3>Business</h3>
+                    <div class="price">$24.99<span>/month</span></div>
+                    <ul>
+                        <li>Everything in Pro</li>
+                        <li>Team collaboration</li>
+                        <li>API access</li>
+                        <li>Custom integrations</li>
+                    </ul>
+                    <button class="btn btn--primary btn--full-width" onclick="trackUpgrade('business')">Choose Business</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Privacy Policy Modal -->
-    <div id="privacyModal" class="modal">
-        <div class="modal__backdrop"></div>
-        <div class="modal__content modal__content--large">
-            <div class="modal__header">
-                <h2 class="modal__title">Privacy Policy</h2>
-                <button id="privacyModalClose" class="modal__close">&times;</button>
-            </div>
-            <div class="modal__body">
-                <div class="legal-document">
-                    <p><strong>Last Updated:</strong> January 1, 2025</p>
-                    
-                    <h3>1. Information We Collect</h3>
-                    <p>We collect information you provide directly to us, such as when you create an account, use our services, or contact us. This may include your name, email address, and usage data.</p>
-                    
-                    <h3>2. How We Use Your Information</h3>
-                    <p>We use the information we collect to provide, maintain, and improve our services, process transactions, and communicate with you.</p>
-                    
-                    <h3>3. Information Sharing and Disclosure</h3>
-                    <p>We do not sell, trade, or otherwise transfer your personal information to third parties without your consent, except as described in this policy.</p>
-                    
-                    <h3>4. Data Security</h3>
-                    <p>We implement appropriate security measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction.</p>
-                    
-                    <h3>5. Data Retention</h3>
-                    <p>We retain your information for as long as necessary to provide our services and fulfill the purposes outlined in this policy.</p>
-                    
-                    <h3>6. Your Rights</h3>
-                    <p>You have the right to access, update, or delete your personal information. You may also opt out of certain communications from us.</p>
-                    
-                    <h3>7. Cookies and Tracking Technologies</h3>
-                    <p>We use cookies and similar technologies to enhance your experience and analyze usage patterns.</p>
-                    
-                    <h3>8. International Transfers</h3>
-                    <p>Your information may be transferred to and processed in countries other than your own, where data protection laws may differ.</p>
-                    
-                    <h3>9. Children's Privacy</h3>
-                    <p>Our services are not intended for children under 13, and we do not knowingly collect personal information from children under 13.</p>
-                    
-                    <h3>10. Changes to This Policy</h3>
-                    <p>We may update this privacy policy from time to time. We will notify you of any changes by posting the new policy on this page.</p>
-                    
-                    <h3>11. Contact Us</h3>
-                    <p>If you have any questions about this privacy policy, please contact us at aaryanraj269@gmail.com</p>
-                </div>
-            </div>
-        </div>
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay hidden">
+        <div class="spinner"></div>
+        <p>Processing...</p>
     </div>
 
-    <!-- Terms of Service Modal -->
-    <div id="termsModal" class="modal">
-        <div class="modal__backdrop"></div>
-        <div class="modal__content modal__content--large">
-            <div class="modal__header">
-                <h2 class="modal__title">Terms of Service</h2>
-                <button id="termsModalClose" class="modal__close">&times;</button>
-            </div>
-            <div class="modal__body">
-                <div class="legal-document">
-                    <p><strong>Last Updated:</strong> January 1, 2025</p>
-                    
-                    <h3>1. Acceptance of Terms</h3>
-                    <p>By accessing and using ToolHub Master, you accept and agree to be bound by the terms and provision of this agreement.</p>
-                    
-                    <h3>2. Description of Service</h3>
-                    <p>ToolHub Master provides a suite of productivity tools including but not limited to AI content detection, PDF conversion, QR code generation, and URL shortening.</p>
-                    
-                    <h3>3. User Accounts</h3>
-                    <p>You are responsible for maintaining the confidentiality of your account and password and for restricting access to your computer.</p>
-                    
-                    <h3>4. Acceptable Use</h3>
-                    <p>You agree not to use the service for any unlawful purpose or to solicit others to perform unlawful acts.</p>
-                    
-                    <h3>5. Intellectual Property Rights</h3>
-                    <p>The service and its original content, features, and functionality are and will remain the exclusive property of ToolHub Master and its licensors.</p>
-                    
-                    <h3>6. User Content</h3>
-                    <p>You retain rights to any content you submit, post, or display on or through the service.</p>
-                    
-                    <h3>7. Prohibited Uses</h3>
-                    <p>You may not use our service to transmit, distribute, or deliver any unsolicited bulk or commercial messages, to impersonate another person, or to engage in illegal activities.</p>
-                    
-                    <h3>8. Termination</h3>
-                    <p>We may terminate or suspend your account and bar access to the service immediately, without prior notice or liability, under our sole discretion.</p>
-                    
-                    <h3>9. Disclaimer</h3>
-                    <p>The information on this website is provided on an "as is" basis. To the fullest extent permitted by law, we exclude all representations, warranties, conditions, and liability.</p>
-                    
-                    <h3>10. Limitation of Liability</h3>
-                    <p>In no event shall ToolHub Master, nor its directors, employees, partners, agents, suppliers, or affiliates, be liable for any indirect, incidental, special, consequential, or punitive damages.</p>
-                    
-                    <h3>11. Governing Law</h3>
-                    <p>These terms shall be interpreted and governed by the laws of the jurisdiction in which the service operates, without regard to conflict of law provisions.</p>
-                    
-                    <h3>12. Changes to Terms</h3>
-                    <p>We reserve the right, at our sole discretion, to modify or replace these terms at any time.</p>
-                    
-                    <h3>13. Contact Information</h3>
-                    <p>Questions about the Terms of Service should be sent to us at aaryanraj269@gmail.com</p>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="toast-container"></div>
 
     <script src="app.js"></script>
 </body>
