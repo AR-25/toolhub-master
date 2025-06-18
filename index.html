@@ -3,25 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ToolHub Master - All-in-One Productivity Tools</title>
-    <meta name="description" content="Boost your productivity with our comprehensive suite of AI-powered tools. From content detection to PDF conversion, we've got you covered.">
+    <title>ToolHub Master - Professional Tools for Modern Workflows</title>
+    <meta name="description" content="Boost your productivity with our comprehensive suite of AI-powered tools. From content detection to PDF conversion, QR codes, and more - all in one platform.">
+    <meta name="keywords" content="productivity tools, AI content detector, PDF converter, QR code generator, URL shortener, password generator">
     <link rel="stylesheet" href="style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-M68FKRBLX2"></script>
     <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-M68FKRBLX2');
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-M68FKRBLX2');
     </script>
     
-    <!-- Required external libraries -->
+    <!-- External Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.3/qrcode.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/markdown-it@13.0.1/dist/markdown-it.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.0/dist/browser-image-compression.min.js"></script>
 </head>
@@ -29,94 +26,223 @@
     <div class="app-container">
         <!-- Header -->
         <header class="header">
-            <div class="logo">
-                <h1>ToolHub Master</h1>
-                <span class="tagline">Professional tools for modern workflows</span>
-            </div>
-            <div class="header-actions">
-                <button id="theme-toggle" class="btn-icon" aria-label="Toggle dark mode">
-                    <span id="theme-icon">🌙</span>
-                </button>
-                <button id="upgrade-btn" class="btn btn-primary">Upgrade to Pro</button>
+            <div class="container">
+                <div class="header__content">
+                    <div class="header__brand">
+                        <h1 class="header__title">ToolHub Master</h1>
+                        <p class="header__subtitle">Professional tools for modern workflows</p>
+                    </div>
+                    <div class="header__actions">
+                        <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme">
+                            <span class="theme-toggle__icon">🌙</span>
+                        </button>
+                        <button id="upgradeBtn" class="btn btn--primary">Upgrade to Pro</button>
+                    </div>
+                </div>
             </div>
         </header>
 
-        <!-- Main content -->
-        <main>
-            <!-- Tools Grid -->
-            <section class="tools-grid" id="tools-grid">
-                <!-- Tool cards will be dynamically generated -->
-            </section>
+        <!-- Main Content -->
+        <main class="main">
+            <div class="container">
+                <!-- Hero Section -->
+                <section class="hero">
+                    <div class="hero__content">
+                        <h2 class="hero__title">All-in-One Productivity Suite</h2>
+                        <p class="hero__subtitle">Streamline your workflow with our powerful collection of professional tools</p>
+                    </div>
+                </section>
 
-            <!-- Tool Modal -->
-            <div id="tool-modal" class="modal">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h2 id="modal-title">Tool Name</h2>
-                        <button id="close-modal" class="btn-icon">&times;</button>
+                <!-- Tools Grid -->
+                <section class="tools-section">
+                    <div class="tools-grid" id="toolsGrid">
+                        <!-- Tools will be dynamically generated -->
                     </div>
-                    <div class="modal-body" id="modal-body">
-                        <!-- Tool-specific content will be injected here -->
-                    </div>
-                    <div class="modal-footer">
-                        <div class="usage-counter" id="usage-counter">Uses left: 3/3</div>
-                        <button id="modal-action" class="btn btn-primary">Process</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Upgrade Modal -->
-            <div id="upgrade-modal" class="modal">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h2>Upgrade to Pro</h2>
-                        <button id="close-upgrade-modal" class="btn-icon">&times;</button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="pricing-cards">
-                            <div class="pricing-card">
-                                <h3>Pro Plan</h3>
-                                <div class="price">$9.99<span>/month</span></div>
-                                <ul class="feature-list">
-                                    <li>✓ Unlimited tool usage</li>
-                                    <li>✓ Priority support</li>
-                                    <li>✓ No advertisements</li>
-                                    <li>✓ Export capabilities</li>
-                                </ul>
-                                <button class="btn btn-primary btn-full" id="select-pro">Select Pro</button>
-                            </div>
-                            <div class="pricing-card pricing-card-featured">
-                                <div class="popular-badge">Most Popular</div>
-                                <h3>Business Plan</h3>
-                                <div class="price">$24.99<span>/month</span></div>
-                                <ul class="feature-list">
-                                    <li>✓ Everything in Pro</li>
-                                    <li>✓ Team collaboration</li>
-                                    <li>✓ API access</li>
-                                    <li>✓ Custom branding</li>
-                                </ul>
-                                <button class="btn btn-primary btn-full" id="select-business">Select Business</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Toast Notification -->
-            <div id="toast" class="toast">
-                <div id="toast-message"></div>
+                </section>
             </div>
         </main>
 
         <!-- Footer -->
-        <footer>
-            <p>© 2025 ToolHub Master. All rights reserved.</p>
-            <div class="footer-links">
-                <a href="#">Privacy Policy</a>
-                <a href="#">Terms of Service</a>
-                <a href="#">Contact</a>
+        <footer class="footer">
+            <div class="container">
+                <div class="footer__content">
+                    <div class="footer__brand">
+                        <h3>ToolHub Master</h3>
+                        <p>© 2025 Aaryan Raj</p>
+                    </div>
+                    <div class="footer__links">
+                        <div class="footer__section">
+                            <h4>Contact</h4>
+                            <p>Email: <a href="mailto:aaryanraj269@gmail.com">aaryanraj269@gmail.com</a></p>
+                            <p>LinkedIn: <a href="https://www.linkedin.com/in/aaryan-raj/" target="_blank">Aaryan Raj</a></p>
+                        </div>
+                        <div class="footer__section">
+                            <h4>Legal</h4>
+                            <a href="#" id="privacyPolicyLink">Privacy Policy</a>
+                            <a href="#" id="termsServiceLink">Terms of Service</a>
+                        </div>
+                    </div>
+                </div>
             </div>
         </footer>
+    </div>
+
+    <!-- Tool Modal -->
+    <div id="toolModal" class="modal">
+        <div class="modal__backdrop"></div>
+        <div class="modal__content">
+            <div class="modal__header">
+                <h2 id="modalTitle" class="modal__title">Tool Name</h2>
+                <button id="modalClose" class="modal__close">&times;</button>
+            </div>
+            <div class="modal__body" id="modalBody">
+                <!-- Tool interface will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Upgrade Modal -->
+    <div id="upgradeModal" class="modal">
+        <div class="modal__backdrop"></div>
+        <div class="modal__content">
+            <div class="modal__header">
+                <h2 class="modal__title">Upgrade to Pro</h2>
+                <button id="upgradeModalClose" class="modal__close">&times;</button>
+            </div>
+            <div class="modal__body">
+                <div class="pricing-cards">
+                    <div class="pricing-card">
+                        <h3>Pro Plan</h3>
+                        <div class="pricing-card__price">$9.99<span>/month</span></div>
+                        <ul class="pricing-card__features">
+                            <li>✓ Unlimited tool usage</li>
+                            <li>✓ Priority support</li>
+                            <li>✓ No advertisements</li>
+                            <li>✓ Advanced features</li>
+                            <li>✓ Export capabilities</li>
+                        </ul>
+                        <button class="btn btn--primary btn--full-width">Choose Pro</button>
+                    </div>
+                    <div class="pricing-card pricing-card--featured">
+                        <h3>Business Plan</h3>
+                        <div class="pricing-card__price">$24.99<span>/month</span></div>
+                        <ul class="pricing-card__features">
+                            <li>✓ Everything in Pro</li>
+                            <li>✓ Team collaboration</li>
+                            <li>✓ API access</li>
+                            <li>✓ Custom branding</li>
+                            <li>✓ White-label options</li>
+                            <li>✓ Advanced analytics</li>
+                        </ul>
+                        <button class="btn btn--primary btn--full-width">Choose Business</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Privacy Policy Modal -->
+    <div id="privacyModal" class="modal">
+        <div class="modal__backdrop"></div>
+        <div class="modal__content modal__content--large">
+            <div class="modal__header">
+                <h2 class="modal__title">Privacy Policy</h2>
+                <button id="privacyModalClose" class="modal__close">&times;</button>
+            </div>
+            <div class="modal__body">
+                <div class="legal-document">
+                    <p><strong>Last Updated:</strong> January 1, 2025</p>
+                    
+                    <h3>1. Information We Collect</h3>
+                    <p>We collect information you provide directly to us, such as when you create an account, use our services, or contact us. This may include your name, email address, and usage data.</p>
+                    
+                    <h3>2. How We Use Your Information</h3>
+                    <p>We use the information we collect to provide, maintain, and improve our services, process transactions, and communicate with you.</p>
+                    
+                    <h3>3. Information Sharing and Disclosure</h3>
+                    <p>We do not sell, trade, or otherwise transfer your personal information to third parties without your consent, except as described in this policy.</p>
+                    
+                    <h3>4. Data Security</h3>
+                    <p>We implement appropriate security measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction.</p>
+                    
+                    <h3>5. Data Retention</h3>
+                    <p>We retain your information for as long as necessary to provide our services and fulfill the purposes outlined in this policy.</p>
+                    
+                    <h3>6. Your Rights</h3>
+                    <p>You have the right to access, update, or delete your personal information. You may also opt out of certain communications from us.</p>
+                    
+                    <h3>7. Cookies and Tracking Technologies</h3>
+                    <p>We use cookies and similar technologies to enhance your experience and analyze usage patterns.</p>
+                    
+                    <h3>8. International Transfers</h3>
+                    <p>Your information may be transferred to and processed in countries other than your own, where data protection laws may differ.</p>
+                    
+                    <h3>9. Children's Privacy</h3>
+                    <p>Our services are not intended for children under 13, and we do not knowingly collect personal information from children under 13.</p>
+                    
+                    <h3>10. Changes to This Policy</h3>
+                    <p>We may update this privacy policy from time to time. We will notify you of any changes by posting the new policy on this page.</p>
+                    
+                    <h3>11. Contact Us</h3>
+                    <p>If you have any questions about this privacy policy, please contact us at aaryanraj269@gmail.com</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Terms of Service Modal -->
+    <div id="termsModal" class="modal">
+        <div class="modal__backdrop"></div>
+        <div class="modal__content modal__content--large">
+            <div class="modal__header">
+                <h2 class="modal__title">Terms of Service</h2>
+                <button id="termsModalClose" class="modal__close">&times;</button>
+            </div>
+            <div class="modal__body">
+                <div class="legal-document">
+                    <p><strong>Last Updated:</strong> January 1, 2025</p>
+                    
+                    <h3>1. Acceptance of Terms</h3>
+                    <p>By accessing and using ToolHub Master, you accept and agree to be bound by the terms and provision of this agreement.</p>
+                    
+                    <h3>2. Description of Service</h3>
+                    <p>ToolHub Master provides a suite of productivity tools including but not limited to AI content detection, PDF conversion, QR code generation, and URL shortening.</p>
+                    
+                    <h3>3. User Accounts</h3>
+                    <p>You are responsible for maintaining the confidentiality of your account and password and for restricting access to your computer.</p>
+                    
+                    <h3>4. Acceptable Use</h3>
+                    <p>You agree not to use the service for any unlawful purpose or to solicit others to perform unlawful acts.</p>
+                    
+                    <h3>5. Intellectual Property Rights</h3>
+                    <p>The service and its original content, features, and functionality are and will remain the exclusive property of ToolHub Master and its licensors.</p>
+                    
+                    <h3>6. User Content</h3>
+                    <p>You retain rights to any content you submit, post, or display on or through the service.</p>
+                    
+                    <h3>7. Prohibited Uses</h3>
+                    <p>You may not use our service to transmit, distribute, or deliver any unsolicited bulk or commercial messages, to impersonate another person, or to engage in illegal activities.</p>
+                    
+                    <h3>8. Termination</h3>
+                    <p>We may terminate or suspend your account and bar access to the service immediately, without prior notice or liability, under our sole discretion.</p>
+                    
+                    <h3>9. Disclaimer</h3>
+                    <p>The information on this website is provided on an "as is" basis. To the fullest extent permitted by law, we exclude all representations, warranties, conditions, and liability.</p>
+                    
+                    <h3>10. Limitation of Liability</h3>
+                    <p>In no event shall ToolHub Master, nor its directors, employees, partners, agents, suppliers, or affiliates, be liable for any indirect, incidental, special, consequential, or punitive damages.</p>
+                    
+                    <h3>11. Governing Law</h3>
+                    <p>These terms shall be interpreted and governed by the laws of the jurisdiction in which the service operates, without regard to conflict of law provisions.</p>
+                    
+                    <h3>12. Changes to Terms</h3>
+                    <p>We reserve the right, at our sole discretion, to modify or replace these terms at any time.</p>
+                    
+                    <h3>13. Contact Information</h3>
+                    <p>Questions about the Terms of Service should be sent to us at aaryanraj269@gmail.com</p>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="app.js"></script>

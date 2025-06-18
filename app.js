@@ -1,1555 +1,1403 @@
-// ToolHub Master - Main Application JavaScript
+// ToolHub Master - Complete Application Logic
 
-// Initialize Google Analytics
-function trackEvent(category, action, label) {
-    if (typeof gtag !== 'undefined') {
-        gtag('event', action, {
-            'event_category': category,
-            'event_label': label
-        });
-    }
-}
-
-// ToolHub Master Application
 class ToolHubMaster {
     constructor() {
-        // Tool definitions with limits
         this.tools = [
             {
-                id: 'ai-detector',
-                name: 'AI Content Detector',
-                category: 'AI Tools',
-                icon: '🤖',
-                description: 'Detect AI-generated text with 99% accuracy',
+                id: "ai-detector",
+                name: "AI Content Detector",
+                category: "AI Tools",
+                icon: "🤖",
+                description: "Detect AI-generated text with 99% accuracy",
                 limit: 3,
-                storageKey: 'ai_detector'
+                storageKey: "ai_detector"
             },
             {
-                id: 'pdf-converter',
-                name: 'PDF Converter Suite',
-                category: 'File Tools',
-                icon: '📄',
-                description: 'Convert, compress, merge, and split PDFs',
+                id: "pdf-converter",
+                name: "PDF Converter Suite",
+                category: "File Tools",
+                icon: "📄",
+                description: "Convert, compress, merge, and split PDFs",
                 limit: 5,
-                storageKey: 'pdf_converter'
+                storageKey: "pdf_converter"
             },
             {
-                id: 'qr-generator',
-                name: 'QR Code Generator Pro',
-                category: 'Utility Tools',
-                icon: '⬜',
-                description: 'Create custom QR codes with analytics',
+                id: "qr-generator",
+                name: "QR Code Generator Pro",
+                category: "Utility Tools",
+                icon: "⬜",
+                description: "Create custom QR codes with analytics",
                 limit: 10,
-                storageKey: 'qr_generator'
+                storageKey: "qr_generator"
             },
             {
-                id: 'image-compressor',
-                name: 'Smart Image Compressor',
-                category: 'File Tools',
-                icon: '🖼️',
-                description: 'Optimize images without quality loss',
+                id: "image-compressor",
+                name: "Smart Image Compressor",
+                category: "File Tools",
+                icon: "🖼️",
+                description: "Optimize images without quality loss",
                 limit: 5,
-                storageKey: 'image_compressor'
+                storageKey: "image_compressor"
             },
             {
-                id: 'url-shortener',
-                name: 'URL Shortener Plus',
-                category: 'Utility Tools',
-                icon: '🔗',
-                description: 'Shorten URLs with detailed analytics',
+                id: "url-shortener",
+                name: "URL Shortener Plus",
+                category: "Utility Tools",
+                icon: "🔗",
+                description: "Shorten URLs with detailed analytics",
                 limit: 10,
-                storageKey: 'url_shortener'
+                storageKey: "url_shortener"
             },
             {
-                id: 'plagiarism-checker',
-                name: 'Plagiarism Checker',
-                category: 'Writing Tools',
-                icon: '🔍',
-                description: 'Detect duplicate content instantly',
+                id: "plagiarism-checker",
+                name: "Plagiarism Checker",
+                category: "Writing Tools",
+                icon: "🔍",
+                description: "Detect duplicate content instantly",
                 limit: 2,
-                storageKey: 'plagiarism_checker'
+                storageKey: "plagiarism_checker"
             },
             {
-                id: 'text-summarizer',
-                name: 'Text Summarizer',
-                category: 'AI Tools',
-                icon: '📝',
-                description: 'AI-powered content summarization',
+                id: "text-summarizer",
+                name: "Text Summarizer",
+                category: "AI Tools",
+                icon: "📝",
+                description: "AI-powered content summarization",
                 limit: 3,
-                storageKey: 'text_summarizer'
+                storageKey: "text_summarizer"
             },
             {
-                id: 'color-palette',
-                name: 'Color Palette Generator',
-                category: 'Design Tools',
-                icon: '🎨',
-                description: 'Extract beautiful color schemes',
+                id: "color-generator",
+                name: "Color Palette Generator",
+                category: "Design Tools",
+                icon: "🎨",
+                description: "Extract beautiful color schemes",
                 limit: 10,
-                storageKey: 'color_palette'
+                storageKey: "color_generator"
             },
             {
-                id: 'password-generator',
-                name: 'Password Generator',
-                category: 'Security Tools',
-                icon: '🔐',
-                description: 'Create secure passwords instantly',
+                id: "password-generator",
+                name: "Password Generator",
+                category: "Security Tools",
+                icon: "🔐",
+                description: "Create secure passwords instantly",
                 limit: 20,
-                storageKey: 'password_generator'
+                storageKey: "password_generator"
             },
             {
-                id: 'markdown-editor',
-                name: 'Markdown Editor',
-                category: 'Writing Tools',
-                icon: '✍️',
-                description: 'Live editing with real-time preview',
-                limit: -1, // Unlimited
-                storageKey: 'markdown_editor'
+                id: "markdown-editor",
+                name: "Markdown Editor",
+                category: "Writing Tools",
+                icon: "✍️",
+                description: "Live editing with real-time preview",
+                limit: -1,
+                storageKey: "markdown_editor"
             }
         ];
-        
-        // Pricing plans
-        this.pricing = {
-            pro: {
-                price: '$9.99/month',
-                features: ['Unlimited tool usage', 'Priority support', 'No ads', 'Export capabilities']
-            },
-            business: {
-                price: '$24.99/month',
-                features: ['Everything in Pro', 'Team collaboration', 'API access', 'Custom branding']
-            }
-        };
-        
-        // Current theme
-        this.theme = localStorage.getItem('theme') || 'light';
-        
-        // Current active tool
-        this.activeTool = null;
-        
-        // Initialize the application
-        this.init();
+
+        this.currentTool = null;
+        this.urlDatabase = JSON.parse(localStorage.getItem('url_database') || '{}');
+        this.initializeApp();
     }
-    
-    // Initialize the application
-    init() {
+
+    initializeApp() {
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => this.setupApp());
+        } else {
+            this.setupApp();
+        }
+    }
+
+    setupApp() {
+        this.resetDailyUsage();
+        this.setupThemeToggle();
         this.renderToolsGrid();
-        this.setupEventListeners();
-        this.applyTheme();
+        this.setupModals();
+        this.setupFooterLinks();
+        this.trackPageView();
     }
-    
-    // Render the tools grid
+
+    // Theme Management
+    setupThemeToggle() {
+        const themeToggle = document.getElementById('themeToggle');
+        if (!themeToggle) return;
+        
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-color-scheme', savedTheme);
+        this.updateThemeIcon(savedTheme);
+
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = document.documentElement.getAttribute('data-color-scheme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-color-scheme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            this.updateThemeIcon(newTheme);
+        });
+    }
+
+    updateThemeIcon(theme) {
+        const icon = document.querySelector('.theme-toggle__icon');
+        if (icon) {
+            icon.textContent = theme === 'light' ? '🌙' : '☀️';
+        }
+    }
+
+    // Usage Tracking
+    resetDailyUsage() {
+        const today = new Date().toISOString().slice(0, 10);
+        const lastReset = localStorage.getItem('last_reset');
+        
+        if (lastReset !== today) {
+            this.tools.forEach(tool => {
+                localStorage.setItem(tool.storageKey, '0');
+            });
+            localStorage.setItem('last_reset', today);
+        }
+    }
+
+    getUsageCount(storageKey) {
+        return parseInt(localStorage.getItem(storageKey) || '0');
+    }
+
+    incrementUsage(storageKey) {
+        const current = this.getUsageCount(storageKey);
+        localStorage.setItem(storageKey, (current + 1).toString());
+        this.renderToolsGrid();
+    }
+
+    canUseTool(tool) {
+        if (tool.limit === -1) return true;
+        return this.getUsageCount(tool.storageKey) < tool.limit;
+    }
+
+    getRemainingUses(tool) {
+        if (tool.limit === -1) return '∞';
+        return Math.max(0, tool.limit - this.getUsageCount(tool.storageKey));
+    }
+
+    // Tools Grid Rendering
     renderToolsGrid() {
-        const toolsGrid = document.getElementById('tools-grid');
-        toolsGrid.innerHTML = '';
+        const grid = document.getElementById('toolsGrid');
+        if (!grid) return;
         
-        this.tools.forEach(tool => {
-            const usageCount = this.getRemainingUses(tool.storageKey);
-            const usageText = tool.limit === -1 ? 'Unlimited' : `${usageCount}/${tool.limit} uses`;
-            
-            const toolCard = document.createElement('div');
-            toolCard.className = 'tool-card glass-card';
-            toolCard.dataset.toolId = tool.id;
-            
-            toolCard.innerHTML = `
-                <div class="tool-icon">${tool.icon}</div>
-                <div class="tool-name">${tool.name}</div>
-                <div class="tool-description">${tool.description}</div>
-                <div class="tool-footer">
-                    <div class="tool-category">${tool.category}</div>
-                    <div class="tool-usage">${usageText}</div>
-                </div>
-            `;
-            
-            toolsGrid.appendChild(toolCard);
+        grid.innerHTML = this.tools.map(tool => this.createToolCard(tool)).join('');
+        
+        document.querySelectorAll('.tool-card').forEach((card, index) => {
+            card.addEventListener('click', () => this.openTool(this.tools[index]));
         });
     }
-    
-    // Set up event listeners
-    setupEventListeners() {
-        // Theme toggle
-        const themeToggle = document.getElementById('theme-toggle');
-        themeToggle.addEventListener('click', () => this.toggleTheme());
-        
-        // Upgrade button
-        const upgradeBtn = document.getElementById('upgrade-btn');
-        upgradeBtn.addEventListener('click', () => this.openUpgradeModal());
-        
-        // Close upgrade modal
-        const closeUpgradeModal = document.getElementById('close-upgrade-modal');
-        closeUpgradeModal.addEventListener('click', () => this.closeUpgradeModal());
-        
-        // Select pro plan
-        const selectPro = document.getElementById('select-pro');
-        selectPro.addEventListener('click', () => this.selectPlan('pro'));
-        
-        // Select business plan
-        const selectBusiness = document.getElementById('select-business');
-        selectBusiness.addEventListener('click', () => this.selectPlan('business'));
-        
-        // Tool cards
-        document.querySelectorAll('.tool-card').forEach(card => {
-            card.addEventListener('click', () => {
-                const toolId = card.dataset.toolId;
-                this.openToolModal(toolId);
-            });
-        });
-        
-        // Close modal
-        const closeModal = document.getElementById('close-modal');
-        closeModal.addEventListener('click', () => this.closeToolModal());
-        
-        // Modal action button
-        const modalAction = document.getElementById('modal-action');
-        modalAction.addEventListener('click', () => this.processCurrentTool());
-    }
-    
-    // Toggle theme between light and dark
-    toggleTheme() {
-        this.theme = this.theme === 'light' ? 'dark' : 'light';
-        localStorage.setItem('theme', this.theme);
-        this.applyTheme();
-    }
-    
-    // Apply the current theme
-    applyTheme() {
-        document.body.dataset.theme = this.theme;
-        const themeIcon = document.getElementById('theme-icon');
-        themeIcon.textContent = this.theme === 'light' ? '🌙' : '☀️';
-    }
-    
-    // Open the upgrade modal
-    openUpgradeModal() {
-        const upgradeModal = document.getElementById('upgrade-modal');
-        upgradeModal.style.display = 'flex';
-        trackEvent('Monetization', 'open_upgrade_modal', 'Upgrade Modal Opened');
-    }
-    
-    // Close the upgrade modal
-    closeUpgradeModal() {
-        const upgradeModal = document.getElementById('upgrade-modal');
-        upgradeModal.style.display = 'none';
-    }
-    
-    // Handle plan selection
-    selectPlan(plan) {
-        this.showToast(`Selected ${plan} plan! Payment integration would be implemented here.`, 'success');
-        this.closeUpgradeModal();
-        trackEvent('Monetization', 'select_plan', `Selected ${plan} Plan`);
-    }
-    
-    // Open tool modal
-    openToolModal(toolId) {
-        const tool = this.tools.find(t => t.id === toolId);
-        if (!tool) return;
-        
-        this.activeTool = tool;
-        
-        const modal = document.getElementById('tool-modal');
-        const modalTitle = document.getElementById('modal-title');
-        const modalBody = document.getElementById('modal-body');
-        const usageCounter = document.getElementById('usage-counter');
-        
-        modalTitle.textContent = tool.name;
-        
-        // Set usage counter text
-        const usageCount = this.getRemainingUses(tool.storageKey);
-        usageCounter.textContent = tool.limit === -1 ? 'Unlimited' : `Uses left: ${usageCount}/${tool.limit}`;
-        
-        // Check if user has reached the limit
-        if (usageCount === 0 && tool.limit !== -1) {
-            modalBody.innerHTML = `
-                <div class="tool-container">
-                    <p>You've reached your daily limit for this tool. Upgrade to Pro for unlimited access.</p>
-                    <button class="btn btn-primary" id="modal-upgrade-btn">Upgrade to Pro</button>
+
+    createToolCard(tool) {
+        const remaining = this.getRemainingUses(tool);
+        const usagePercent = tool.limit === -1 ? 0 : ((tool.limit - remaining) / tool.limit) * 100;
+        const isExhausted = remaining === 0 && tool.limit !== -1;
+
+        return `
+            <div class="tool-card">
+                <div class="tool-card__header">
+                    <div class="tool-card__icon">${tool.icon}</div>
+                    <div>
+                        <div class="tool-card__category">${tool.category}</div>
+                        <h3 class="tool-card__title">${tool.name}</h3>
+                    </div>
                 </div>
-            `;
-            
-            // Add event listener to the upgrade button
-            document.getElementById('modal-upgrade-btn').addEventListener('click', () => {
-                this.closeToolModal();
-                this.openUpgradeModal();
-            });
-            
-            modal.style.display = 'flex';
-            return;
-        }
-        
-        // Render tool-specific content
-        modalBody.innerHTML = this.getToolContent(tool);
-        
-        // Initialize tool-specific functionality
-        this.initializeTool(tool);
-        
-        modal.style.display = 'flex';
-        trackEvent('Tools', 'open_tool', tool.name);
-    }
-    
-    // Close tool modal
-    closeToolModal() {
-        const modal = document.getElementById('tool-modal');
-        modal.style.display = 'none';
-        this.activeTool = null;
-    }
-    
-    // Get remaining uses for a tool
-    getRemainingUses(storageKey) {
-        const data = JSON.parse(localStorage.getItem('toolhub_uses') || '{}');
-        const today = new Date().toISOString().slice(0, 10);
-        
-        if (!data[storageKey] || data[storageKey].date !== today) {
-            return this.tools.find(t => t.storageKey === storageKey).limit;
-        }
-        
-        const tool = this.tools.find(t => t.storageKey === storageKey);
-        if (tool.limit === -1) return -1; // Unlimited
-        
-        return Math.max(0, tool.limit - data[storageKey].count);
-    }
-    
-    // Increment usage count for a tool
-    incrementUse(storageKey) {
-        const tool = this.tools.find(t => t.storageKey === storageKey);
-        if (tool.limit === -1) return; // Don't track unlimited tools
-        
-        const data = JSON.parse(localStorage.getItem('toolhub_uses') || '{}');
-        const today = new Date().toISOString().slice(0, 10);
-        
-        if (!data[storageKey] || data[storageKey].date !== today) {
-            data[storageKey] = { count: 1, date: today };
-        } else {
-            data[storageKey].count += 1;
-        }
-        
-        localStorage.setItem('toolhub_uses', JSON.stringify(data));
-        
-        // Update UI
-        this.renderToolsGrid();
-        
-        // Update usage counter in modal
-        const usageCounter = document.getElementById('usage-counter');
-        const usageCount = this.getRemainingUses(storageKey);
-        usageCounter.textContent = tool.limit === -1 ? 'Unlimited' : `Uses left: ${usageCount}/${tool.limit}`;
-        
-        trackEvent('Tools', 'tool_use', tool.name);
-    }
-    
-    // Get tool-specific content for modal
-    getToolContent(tool) {
-        switch (tool.id) {
-            case 'ai-detector':
-                return `
-                    <div class="tool-container">
-                        <div class="form-group">
-                            <label class="form-label">Paste text to analyze for AI content:</label>
-                            <textarea class="form-textarea" id="ai-text" placeholder="Paste text here (minimum 100 characters)"></textarea>
-                        </div>
-                        <div id="ai-result"></div>
-                    </div>
-                `;
-            
-            case 'pdf-converter':
-                return `
-                    <div class="tool-container">
-                        <div class="file-drop-area" id="pdf-drop-area">
-                            <div class="file-drop-message">Drag & drop PDF files here, or click to select</div>
-                            <input type="file" id="pdf-file" accept=".pdf" style="display: none;">
-                        </div>
-                        <div class="form-group mt-3">
-                            <label class="form-label">Conversion Type:</label>
-                            <select class="form-select" id="pdf-conversion-type">
-                                <option value="compress">Compress PDF</option>
-                                <option value="pdf-to-image">PDF to Image</option>
-                                <option value="merge">Merge PDFs</option>
-                                <option value="split">Split PDF</option>
-                            </select>
-                        </div>
-                        <div id="pdf-result"></div>
-                    </div>
-                `;
-            
-            case 'qr-generator':
-                return `
-                    <div class="tool-container">
-                        <div class="form-group">
-                            <label class="form-label">Enter text or URL:</label>
-                            <input type="text" class="form-input" id="qr-text" placeholder="https://example.com">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">QR Code Size:</label>
-                            <select class="form-select" id="qr-size">
-                                <option value="128">Small (128x128)</option>
-                                <option value="256" selected>Medium (256x256)</option>
-                                <option value="512">Large (512x512)</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Foreground Color:</label>
-                            <input type="color" class="form-input" id="qr-color" value="#000000">
-                        </div>
-                        <div class="qr-result" id="qr-result"></div>
-                    </div>
-                `;
-            
-            case 'image-compressor':
-                return `
-                    <div class="tool-container">
-                        <div class="file-drop-area" id="image-drop-area">
-                            <div class="file-drop-message">Drag & drop image files here, or click to select</div>
-                            <input type="file" id="image-file" accept="image/*" style="display: none;">
-                        </div>
-                        <div class="form-group mt-3">
-                            <label class="form-label">Quality:</label>
-                            <input type="range" min="30" max="100" value="80" class="form-input" id="image-quality">
-                            <div class="flex justify-between">
-                                <span>Lower quality</span>
-                                <span>Higher quality</span>
+                <p class="tool-card__description">${tool.description}</p>
+                <div class="tool-card__footer">
+                    <div class="tool-card__usage">
+                        <span>${remaining}${tool.limit !== -1 ? `/${tool.limit}` : ''} uses</span>
+                        ${tool.limit !== -1 ? `
+                            <div class="usage-indicator ${isExhausted ? 'usage-indicator--full' : ''}">
+                                <div class="usage-indicator__fill" style="width: ${usagePercent}%"></div>
                             </div>
-                        </div>
-                        <div id="image-result"></div>
+                        ` : ''}
                     </div>
-                `;
-            
-            case 'url-shortener':
-                return `
-                    <div class="tool-container">
-                        <div class="form-group">
-                            <label class="form-label">Enter long URL:</label>
-                            <input type="url" class="form-input" id="long-url" placeholder="https://example.com/very/long/path/to/resource">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Custom alias (optional):</label>
-                            <input type="text" class="form-input" id="url-alias" placeholder="my-custom-alias">
-                        </div>
-                        <div id="url-result"></div>
-                    </div>
-                `;
-            
-            case 'plagiarism-checker':
-                return `
-                    <div class="tool-container">
-                        <div class="form-group">
-                            <label class="form-label">Paste text to check for plagiarism:</label>
-                            <textarea class="form-textarea" id="plagiarism-text" placeholder="Paste text here (minimum 100 characters)"></textarea>
-                        </div>
-                        <div id="plagiarism-result"></div>
-                    </div>
-                `;
-            
-            case 'text-summarizer':
-                return `
-                    <div class="tool-container">
-                        <div class="form-group">
-                            <label class="form-label">Paste text to summarize:</label>
-                            <textarea class="form-textarea" id="summary-text" placeholder="Paste text here (minimum 500 characters)"></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Summary Length:</label>
-                            <select class="form-select" id="summary-length">
-                                <option value="short">Short (25%)</option>
-                                <option value="medium" selected>Medium (50%)</option>
-                                <option value="long">Long (75%)</option>
-                            </select>
-                        </div>
-                        <div id="summary-result"></div>
-                    </div>
-                `;
-            
-            case 'color-palette':
-                return `
-                    <div class="tool-container">
-                        <div class="form-group">
-                            <label class="form-label">Choose generation method:</label>
-                            <select class="form-select" id="palette-method">
-                                <option value="random">Random palette</option>
-                                <option value="image">Extract from image</option>
-                            </select>
-                        </div>
-                        <div id="palette-image-section" style="display: none;">
-                            <div class="file-drop-area" id="palette-drop-area">
-                                <div class="file-drop-message">Drag & drop image files here, or click to select</div>
-                                <input type="file" id="palette-file" accept="image/*" style="display: none;">
-                            </div>
-                        </div>
-                        <div id="palette-result"></div>
-                    </div>
-                `;
-            
-            case 'password-generator':
-                return `
-                    <div class="tool-container">
-                        <div class="form-group">
-                            <label class="form-label">Password Length:</label>
-                            <input type="range" min="8" max="64" value="16" class="form-input" id="password-length">
-                            <div class="flex justify-between">
-                                <span>8</span>
-                                <span id="length-value">16</span>
-                                <span>64</span>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <div class="flex gap-2">
-                                <label><input type="checkbox" checked id="include-uppercase"> Uppercase (A-Z)</label>
-                            </div>
-                            <div class="flex gap-2">
-                                <label><input type="checkbox" checked id="include-lowercase"> Lowercase (a-z)</label>
-                            </div>
-                            <div class="flex gap-2">
-                                <label><input type="checkbox" checked id="include-numbers"> Numbers (0-9)</label>
-                            </div>
-                            <div class="flex gap-2">
-                                <label><input type="checkbox" checked id="include-symbols"> Symbols (!@#$%^&*)</label>
-                            </div>
-                        </div>
-                        <div id="password-result"></div>
-                    </div>
-                `;
-            
-            case 'markdown-editor':
-                return `
-                    <div class="tool-container">
-                        <div class="markdown-container">
-                            <div class="form-group">
-                                <label class="form-label">Markdown:</label>
-                                <textarea class="form-textarea" id="markdown-input" placeholder="# Type your markdown here"></textarea>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Preview:</label>
-                                <div class="markdown-preview" id="markdown-preview"></div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            
-            default:
-                return `<div class="tool-container">Tool content not available.</div>`;
-        }
-    }
-    
-    // Initialize tool-specific functionality
-    initializeTool(tool) {
-        switch (tool.id) {
-            case 'ai-detector':
-                // Nothing to initialize
-                break;
-            
-            case 'pdf-converter':
-                const pdfDropArea = document.getElementById('pdf-drop-area');
-                const pdfFileInput = document.getElementById('pdf-file');
-                
-                pdfDropArea.addEventListener('click', () => {
-                    pdfFileInput.click();
-                });
-                
-                pdfDropArea.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    pdfDropArea.classList.add('active');
-                });
-                
-                pdfDropArea.addEventListener('dragleave', () => {
-                    pdfDropArea.classList.remove('active');
-                });
-                
-                pdfDropArea.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    pdfDropArea.classList.remove('active');
-                    if (e.dataTransfer.files.length) {
-                        pdfFileInput.files = e.dataTransfer.files;
-                        this.handlePdfFileSelected();
-                    }
-                });
-                
-                pdfFileInput.addEventListener('change', () => {
-                    this.handlePdfFileSelected();
-                });
-                break;
-            
-            case 'qr-generator':
-                // Nothing to initialize
-                break;
-            
-            case 'image-compressor':
-                const imageDropArea = document.getElementById('image-drop-area');
-                const imageFileInput = document.getElementById('image-file');
-                
-                imageDropArea.addEventListener('click', () => {
-                    imageFileInput.click();
-                });
-                
-                imageDropArea.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    imageDropArea.classList.add('active');
-                });
-                
-                imageDropArea.addEventListener('dragleave', () => {
-                    imageDropArea.classList.remove('active');
-                });
-                
-                imageDropArea.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    imageDropArea.classList.remove('active');
-                    if (e.dataTransfer.files.length) {
-                        imageFileInput.files = e.dataTransfer.files;
-                        this.handleImageFileSelected();
-                    }
-                });
-                
-                imageFileInput.addEventListener('change', () => {
-                    this.handleImageFileSelected();
-                });
-                break;
-            
-            case 'url-shortener':
-                // Nothing to initialize
-                break;
-            
-            case 'plagiarism-checker':
-                // Nothing to initialize
-                break;
-            
-            case 'text-summarizer':
-                // Nothing to initialize
-                break;
-            
-            case 'color-palette':
-                const paletteMethod = document.getElementById('palette-method');
-                const paletteImageSection = document.getElementById('palette-image-section');
-                
-                paletteMethod.addEventListener('change', () => {
-                    paletteImageSection.style.display = paletteMethod.value === 'image' ? 'block' : 'none';
-                });
-                
-                const paletteDropArea = document.getElementById('palette-drop-area');
-                const paletteFileInput = document.getElementById('palette-file');
-                
-                paletteDropArea.addEventListener('click', () => {
-                    paletteFileInput.click();
-                });
-                
-                paletteDropArea.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    paletteDropArea.classList.add('active');
-                });
-                
-                paletteDropArea.addEventListener('dragleave', () => {
-                    paletteDropArea.classList.remove('active');
-                });
-                
-                paletteDropArea.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    paletteDropArea.classList.remove('active');
-                    if (e.dataTransfer.files.length) {
-                        paletteFileInput.files = e.dataTransfer.files;
-                        // Will be processed when action button is clicked
-                    }
-                });
-                break;
-            
-            case 'password-generator':
-                const lengthSlider = document.getElementById('password-length');
-                const lengthValue = document.getElementById('length-value');
-                
-                lengthSlider.addEventListener('input', () => {
-                    lengthValue.textContent = lengthSlider.value;
-                });
-                break;
-            
-            case 'markdown-editor':
-                const markdownInput = document.getElementById('markdown-input');
-                const markdownPreview = document.getElementById('markdown-preview');
-                const md = window.markdownit();
-                
-                markdownInput.value = `# Hello ToolHub Master\n\nThis is a **Markdown** editor with _real-time_ preview.\n\n## Features\n\n- Live preview\n- Support for all Markdown syntax\n- Export to HTML\n\n> Sample blockquote\n\n\`\`\`javascript\n// Sample code\nconst greeting = "Hello World!";\nconsole.log(greeting);\n\`\`\``;
-                
-                markdownInput.addEventListener('input', () => {
-                    markdownPreview.innerHTML = md.render(markdownInput.value);
-                });
-                
-                // Initial render
-                markdownPreview.innerHTML = md.render(markdownInput.value);
-                break;
-        }
-    }
-    
-    // Process the current tool action
-    processCurrentTool() {
-        if (!this.activeTool) return;
-        
-        // Check if the user has reached the limit
-        const usageCount = this.getRemainingUses(this.activeTool.storageKey);
-        if (usageCount === 0 && this.activeTool.limit !== -1) {
-            this.closeToolModal();
-            this.openUpgradeModal();
-            return;
-        }
-        
-        switch (this.activeTool.id) {
-            case 'ai-detector':
-                this.processAiDetector();
-                break;
-            
-            case 'pdf-converter':
-                this.processPdfConverter();
-                break;
-            
-            case 'qr-generator':
-                this.processQrGenerator();
-                break;
-            
-            case 'image-compressor':
-                this.processImageCompressor();
-                break;
-            
-            case 'url-shortener':
-                this.processUrlShortener();
-                break;
-            
-            case 'plagiarism-checker':
-                this.processPlagiarismChecker();
-                break;
-            
-            case 'text-summarizer':
-                this.processTextSummarizer();
-                break;
-            
-            case 'color-palette':
-                this.processColorPalette();
-                break;
-            
-            case 'password-generator':
-                this.processPasswordGenerator();
-                break;
-            
-            case 'markdown-editor':
-                this.processMarkdownEditor();
-                break;
-        }
-    }
-    
-    // Process AI Detector
-    processAiDetector() {
-        const text = document.getElementById('ai-text').value;
-        const resultContainer = document.getElementById('ai-result');
-        
-        if (text.length < 100) {
-            this.showToast('Please enter at least 100 characters.', 'error');
-            return;
-        }
-        
-        // Show loading state
-        resultContainer.innerHTML = `
-            <div class="text-center mt-3">
-                <div>Analyzing text...</div>
-                <div class="progress-bar mt-2">
-                    <div class="progress-bar-inner" id="ai-progress"></div>
+                    ${isExhausted ? '<div class="tool-card__badge">Upgrade</div>' : ''}
                 </div>
             </div>
         `;
-        
-        const progressBar = document.getElementById('ai-progress');
-        
-        // Simulate progress
-        let progress = 0;
-        const progressInterval = setInterval(() => {
-            progress += 5;
-            progressBar.style.width = `${progress}%`;
-            
-            if (progress >= 100) {
-                clearInterval(progressInterval);
-                
-                // Simulate AI detection
-                const aiScore = Math.floor(Math.random() * 100);
-                
-                let resultClass, resultText;
-                if (aiScore < 30) {
-                    resultClass = 'success';
-                    resultText = 'Likely Human-Written';
-                } else if (aiScore < 70) {
-                    resultClass = 'warning';
-                    resultText = 'Possibly AI-Generated';
-                } else {
-                    resultClass = 'error';
-                    resultText = 'Likely AI-Generated';
-                }
-                
-                resultContainer.innerHTML = `
-                    <div class="result-container mt-3">
-                        <div class="ai-score">${aiScore}%</div>
-                        <div class="ai-score-label text-${resultClass}">${resultText}</div>
-                        <div class="mt-3">
-                            <p>Our AI detection system has analyzed your text and determined it is <strong>${aiScore}%</strong> likely to be AI-generated.</p>
-                            <p>Sentence-by-sentence breakdown:</p>
-                            <ul class="mt-2">
-                                ${this.generateSentenceBreakdown(text)}
-                            </ul>
-                        </div>
-                    </div>
-                `;
-                
-                // Increment usage
-                this.incrementUse(this.activeTool.storageKey);
-            }
-        }, 100);
     }
-    
-    // Generate sentence breakdown for AI detector
-    generateSentenceBreakdown(text) {
-        const sentences = text.match(/[^\.!\?]+[\.!\?]+/g) || [text];
-        let html = '';
-        
-        // Take up to 5 sentences
-        const sampleSentences = sentences.slice(0, 5);
-        
-        sampleSentences.forEach(sentence => {
-            const score = Math.floor(Math.random() * 100);
-            let resultClass;
-            
-            if (score < 30) {
-                resultClass = 'success';
-            } else if (score < 70) {
-                resultClass = 'warning';
-            } else {
-                resultClass = 'error';
-            }
-            
-            html += `<li class="mb-2">"${sentence.trim()}" - <span class="text-${resultClass}">${score}% AI probability</span></li>`;
-        });
-        
-        if (sentences.length > 5) {
-            html += `<li>... and ${sentences.length - 5} more sentences</li>`;
-        }
-        
-        return html;
-    }
-    
-    // Process PDF Converter
-    processPdfConverter() {
-        const fileInput = document.getElementById('pdf-file');
-        const conversionType = document.getElementById('pdf-conversion-type').value;
-        const resultContainer = document.getElementById('pdf-result');
-        
-        if (fileInput.files.length === 0) {
-            this.showToast('Please select a PDF file.', 'error');
-            return;
-        }
-        
-        // Show loading state
-        resultContainer.innerHTML = `
-            <div class="text-center mt-3">
-                <div>Processing PDF...</div>
-                <div class="progress-bar mt-2">
-                    <div class="progress-bar-inner" id="pdf-progress"></div>
-                </div>
-            </div>
-        `;
-        
-        const progressBar = document.getElementById('pdf-progress');
-        
-        // Simulate progress
-        let progress = 0;
-        const progressInterval = setInterval(() => {
-            progress += 5;
-            progressBar.style.width = `${progress}%`;
-            
-            if (progress >= 100) {
-                clearInterval(progressInterval);
-                
-                // Show result based on conversion type
-                let resultHtml = '';
-                
-                switch (conversionType) {
-                    case 'compress':
-                        const originalSize = Math.floor(Math.random() * 1000) + 500;
-                        const compressedSize = Math.floor(originalSize * (Math.random() * 0.4 + 0.3));
-                        const savingsPercent = Math.floor((1 - compressedSize / originalSize) * 100);
-                        
-                        resultHtml = `
-                            <div class="result-container mt-3">
-                                <h3>PDF Compressed Successfully</h3>
-                                <div class="mt-2">
-                                    <p>Original size: ${originalSize} KB</p>
-                                    <p>Compressed size: ${compressedSize} KB</p>
-                                    <p>You saved ${savingsPercent}% of the original file size!</p>
-                                </div>
-                                <button class="btn btn-primary mt-3">Download Compressed PDF</button>
-                            </div>
-                        `;
-                        break;
-                    
-                    case 'pdf-to-image':
-                        resultHtml = `
-                            <div class="result-container mt-3">
-                                <h3>PDF Converted to Images</h3>
-                                <div class="mt-2">
-                                    <p>Successfully converted 3 pages to images.</p>
-                                </div>
-                                <div class="flex gap-2 mt-3">
-                                    <button class="btn btn-primary">Download All Images (ZIP)</button>
-                                    <button class="btn btn-outline">Download Individual Pages</button>
-                                </div>
-                            </div>
-                        `;
-                        break;
-                    
-                    case 'merge':
-                        resultHtml = `
-                            <div class="result-container mt-3">
-                                <h3>PDF Merge</h3>
-                                <div class="mt-2">
-                                    <p>Please select additional PDF files to merge with the current one.</p>
-                                    <input type="file" multiple accept=".pdf" class="form-input mt-2">
-                                </div>
-                                <button class="btn btn-primary mt-3">Merge PDFs</button>
-                            </div>
-                        `;
-                        break;
-                    
-                    case 'split':
-                        resultHtml = `
-                            <div class="result-container mt-3">
-                                <h3>PDF Split</h3>
-                                <div class="mt-2">
-                                    <p>Your PDF has 5 pages. Enter the page ranges to split:</p>
-                                    <input type="text" class="form-input mt-2" placeholder="e.g., 1-2, 3-5">
-                                </div>
-                                <button class="btn btn-primary mt-3">Split PDF</button>
-                            </div>
-                        `;
-                        break;
-                }
-                
-                resultContainer.innerHTML = resultHtml;
-                
-                // Increment usage
-                this.incrementUse(this.activeTool.storageKey);
-            }
-        }, 100);
-    }
-    
-    // Handle PDF file selection
-    handlePdfFileSelected() {
-        const fileInput = document.getElementById('pdf-file');
-        const dropArea = document.getElementById('pdf-drop-area');
-        
-        if (fileInput.files.length > 0) {
-            const fileName = fileInput.files[0].name;
-            dropArea.querySelector('.file-drop-message').textContent = `Selected: ${fileName}`;
-        }
-    }
-    
-    // Process QR Generator
-    processQrGenerator() {
-        const text = document.getElementById('qr-text').value;
-        const size = document.getElementById('qr-size').value;
-        const color = document.getElementById('qr-color').value;
-        const resultContainer = document.getElementById('qr-result');
-        
-        if (!text) {
-            this.showToast('Please enter text or URL.', 'error');
-            return;
-        }
-        
-        // Clear previous result
-        resultContainer.innerHTML = '';
-        
-        // Create QR code canvas
-        const canvas = document.createElement('canvas');
-        resultContainer.appendChild(canvas);
-        
-        // Use QRCode.js library
-        QRCode.toCanvas(canvas, text, {
-            width: parseInt(size),
-            color: {
-                dark: color,
-                light: '#ffffff'
-            }
-        }, function(error) {
-            if (error) console.error(error);
-        });
-        
-        // Add download button
-        const downloadBtn = document.createElement('button');
-        downloadBtn.className = 'btn btn-primary mt-2';
-        downloadBtn.textContent = 'Download QR Code';
-        downloadBtn.addEventListener('click', () => {
-            const link = document.createElement('a');
-            link.download = 'qrcode.png';
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-        });
-        
-        resultContainer.appendChild(downloadBtn);
-        
-        // Increment usage
-        this.incrementUse(this.activeTool.storageKey);
-    }
-    
-    // Process Image Compressor
-    processImageCompressor() {
-        const fileInput = document.getElementById('image-file');
-        const quality = document.getElementById('image-quality').value / 100;
-        const resultContainer = document.getElementById('image-result');
-        
-        if (fileInput.files.length === 0) {
-            this.showToast('Please select an image.', 'error');
-            return;
-        }
-        
-        const file = fileInput.files[0];
-        
-        // Show loading state
-        resultContainer.innerHTML = `
-            <div class="text-center mt-3">
-                <div>Compressing image...</div>
-                <div class="progress-bar mt-2">
-                    <div class="progress-bar-inner" id="image-progress"></div>
-                </div>
-            </div>
-        `;
-        
-        const progressBar = document.getElementById('image-progress');
-        
-        // Compress image using browser-image-compression library
-        const options = {
-            maxSizeMB: 1,
-            maxWidthOrHeight: 1920,
-            useWebWorker: true,
-            initialQuality: quality
-        };
-        
-        // Simulate progress
-        let progress = 0;
-        const progressInterval = setInterval(() => {
-            progress += 5;
-            progressBar.style.width = `${progress}%`;
-            
-            if (progress >= 100) {
-                clearInterval(progressInterval);
-                
-                // Create before/after comparison
-                const originalUrl = URL.createObjectURL(file);
-                
-                // Simulate compression result (in a real app, use the library result)
-                const originalSize = file.size / 1024; // KB
-                const compressedSize = originalSize * (0.3 + quality * 0.4);
-                const savingsPercent = Math.floor((1 - compressedSize / originalSize) * 100);
-                
-                resultContainer.innerHTML = `
-                    <div class="result-container mt-3">
-                        <h3>Image Compressed Successfully</h3>
-                        <div class="mt-2">
-                            <p>Original size: ${originalSize.toFixed(2)} KB</p>
-                            <p>Compressed size: ${compressedSize.toFixed(2)} KB</p>
-                            <p>You saved ${savingsPercent}% of the original file size!</p>
-                        </div>
-                        <div class="comparison-container mt-3">
-                            <div>
-                                <div class="before-after-label">Original</div>
-                                <div class="image-preview">
-                                    <img src="${originalUrl}" alt="Original">
-                                </div>
-                            </div>
-                            <div>
-                                <div class="before-after-label">Compressed</div>
-                                <div class="image-preview">
-                                    <img src="${originalUrl}" alt="Compressed">
-                                </div>
-                            </div>
-                        </div>
-                        <button class="btn btn-primary mt-3">Download Compressed Image</button>
-                    </div>
-                `;
-                
-                // Increment usage
-                this.incrementUse(this.activeTool.storageKey);
-            }
-        }, 100);
-    }
-    
-    // Handle image file selection
-    handleImageFileSelected() {
-        const fileInput = document.getElementById('image-file');
-        const dropArea = document.getElementById('image-drop-area');
-        
-        if (fileInput.files.length > 0) {
-            const fileName = fileInput.files[0].name;
-            dropArea.querySelector('.file-drop-message').textContent = `Selected: ${fileName}`;
-        }
-    }
-    
-    // Process URL Shortener
-    processUrlShortener() {
-        const longUrl = document.getElementById('long-url').value;
-        const alias = document.getElementById('url-alias').value;
-        const resultContainer = document.getElementById('url-result');
-        
-        if (!longUrl) {
-            this.showToast('Please enter a URL.', 'error');
-            return;
-        }
-        
-        // Validate URL
-        try {
-            new URL(longUrl);
-        } catch (e) {
-            this.showToast('Please enter a valid URL.', 'error');
-            return;
-        }
-        
-        // Show loading state
-        resultContainer.innerHTML = `
-            <div class="text-center mt-3">
-                <div>Generating short URL...</div>
-                <div class="progress-bar mt-2">
-                    <div class="progress-bar-inner" id="url-progress"></div>
-                </div>
-            </div>
-        `;
-        
-        const progressBar = document.getElementById('url-progress');
-        
-        // Simulate progress
-        let progress = 0;
-        const progressInterval = setInterval(() => {
-            progress += 10;
-            progressBar.style.width = `${progress}%`;
-            
-            if (progress >= 100) {
-                clearInterval(progressInterval);
-                
-                // Generate short code
-                const shortCode = alias || this.generateShortCode();
-                const shortUrl = `https://toolhub.io/${shortCode}`;
-                
-                resultContainer.innerHTML = `
-                    <div class="result-container mt-3">
-                        <h3>URL Shortened Successfully</h3>
-                        <div class="mt-2">
-                            <p>Short URL:</p>
-                            <div class="flex gap-2 items-center">
-                                <input type="text" class="form-input" value="${shortUrl}" readonly>
-                                <button class="copy-btn" data-copy="${shortUrl}">Copy</button>
-                            </div>
-                        </div>
-                        <div class="mt-3">
-                            <p>QR Code:</p>
-                            <div id="url-qr" class="mt-2"></div>
-                        </div>
-                        <div class="mt-3">
-                            <p>Analytics:</p>
-                            <p>Track clicks and geographic data with our premium plan.</p>
-                        </div>
-                    </div>
-                `;
-                
-                // Generate QR code for the short URL
-                const qrContainer = document.getElementById('url-qr');
-                QRCode.toCanvas(qrContainer, shortUrl, { width: 128 }, function(error) {
-                    if (error) console.error(error);
-                });
-                
-                // Add copy functionality
-                document.querySelector('.copy-btn').addEventListener('click', (e) => {
-                    const textToCopy = e.target.dataset.copy;
-                    navigator.clipboard.writeText(textToCopy).then(() => {
-                        this.showToast('Copied to clipboard!', 'success');
-                    });
-                });
-                
-                // Increment usage
-                this.incrementUse(this.activeTool.storageKey);
-            }
-        }, 100);
-    }
-    
-    // Generate a short code for URL shortener
-    generateShortCode() {
-        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        let result = '';
-        for (let i = 0; i < 6; i++) {
-            result += characters.charAt(Math.floor(Math.random() * characters.length));
-        }
-        return result;
-    }
-    
-    // Process Plagiarism Checker
-    processPlagiarismChecker() {
-        const text = document.getElementById('plagiarism-text').value;
-        const resultContainer = document.getElementById('plagiarism-result');
-        
-        if (text.length < 100) {
-            this.showToast('Please enter at least 100 characters.', 'error');
-            return;
-        }
-        
-        // Show loading state
-        resultContainer.innerHTML = `
-            <div class="text-center mt-3">
-                <div>Checking for plagiarism...</div>
-                <div class="progress-bar mt-2">
-                    <div class="progress-bar-inner" id="plagiarism-progress"></div>
-                </div>
-            </div>
-        `;
-        
-        const progressBar = document.getElementById('plagiarism-progress');
-        
-        // Simulate progress
-        let progress = 0;
-        const progressInterval = setInterval(() => {
-            progress += 5;
-            progressBar.style.width = `${progress}%`;
-            
-            if (progress >= 100) {
-                clearInterval(progressInterval);
-                
-                // Simulate plagiarism detection
-                const plagiarismScore = Math.floor(Math.random() * 30); // 0-30%
-                
-                resultContainer.innerHTML = `
-                    <div class="result-container mt-3">
-                        <h3>Plagiarism Check Results</h3>
-                        <div class="ai-score">${plagiarismScore}%</div>
-                        <div class="ai-score-label">Plagiarism Detected</div>
-                        <div class="mt-3">
-                            <p>Our system found ${plagiarismScore}% of your text potentially plagiarized from other sources.</p>
-                            <div class="mt-2">
-                                <h4>Matching Sources:</h4>
-                                <ul class="mt-1">
-                                    ${this.generateMatchingSources(plagiarismScore)}
-                                </ul>
-                            </div>
-                        </div>
-                        <button class="btn btn-primary mt-3">Download Full Report</button>
-                    </div>
-                `;
-                
-                // Increment usage
-                this.incrementUse(this.activeTool.storageKey);
-            }
-        }, 100);
-    }
-    
-    // Generate matching sources for plagiarism checker
-    generateMatchingSources(score) {
-        if (score < 5) return '<li>No significant matches found.</li>';
-        
-        const sources = [
-            { site: 'wikipedia.org', match: Math.floor(Math.random() * 15) },
-            { site: 'academia.edu', match: Math.floor(Math.random() * 10) },
-            { site: 'researchgate.net', match: Math.floor(Math.random() * 8) }
+
+    // Modal Management
+    setupModals() {
+        const modals = [
+            { id: 'toolModal', closeId: 'modalClose' },
+            { id: 'upgradeModal', closeId: 'upgradeModalClose' },
+            { id: 'privacyModal', closeId: 'privacyModalClose' },
+            { id: 'termsModal', closeId: 'termsModalClose' }
         ];
-        
-        let html = '';
-        
-        sources.forEach(source => {
-            if (source.match > 0) {
-                html += `<li class="mb-1">${source.site} - ${source.match}% match</li>`;
+
+        modals.forEach(({ id, closeId }) => {
+            const modal = document.getElementById(id);
+            const closeBtn = document.getElementById(closeId);
+            const backdrop = modal?.querySelector('.modal__backdrop');
+
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => this.closeModal(id));
+            }
+            if (backdrop) {
+                backdrop.addEventListener('click', () => this.closeModal(id));
             }
         });
-        
-        return html || '<li>No significant matches found.</li>';
-    }
-    
-    // Process Text Summarizer
-    processTextSummarizer() {
-        const text = document.getElementById('summary-text').value;
-        const length = document.getElementById('summary-length').value;
-        const resultContainer = document.getElementById('summary-result');
-        
-        if (text.length < 500) {
-            this.showToast('Please enter at least 500 characters.', 'error');
-            return;
-        }
-        
-        // Show loading state
-        resultContainer.innerHTML = `
-            <div class="text-center mt-3">
-                <div>Generating summary...</div>
-                <div class="progress-bar mt-2">
-                    <div class="progress-bar-inner" id="summary-progress"></div>
-                </div>
-            </div>
-        `;
-        
-        const progressBar = document.getElementById('summary-progress');
-        
-        // Simulate progress
-        let progress = 0;
-        const progressInterval = setInterval(() => {
-            progress += 5;
-            progressBar.style.width = `${progress}%`;
-            
-            if (progress >= 100) {
-                clearInterval(progressInterval);
-                
-                // Generate summary (simplified algorithm for demo)
-                const sentences = text.match(/[^\.!\?]+[\.!\?]+/g) || [text];
-                let summaryLength;
-                
-                switch (length) {
-                    case 'short':
-                        summaryLength = Math.ceil(sentences.length * 0.25);
-                        break;
-                    case 'medium':
-                        summaryLength = Math.ceil(sentences.length * 0.5);
-                        break;
-                    case 'long':
-                        summaryLength = Math.ceil(sentences.length * 0.75);
-                        break;
-                    default:
-                        summaryLength = Math.ceil(sentences.length * 0.5);
-                }
-                
-                // Take evenly distributed sentences for the summary
-                const step = sentences.length / summaryLength;
-                const summarySentences = [];
-                
-                for (let i = 0; i < summaryLength; i++) {
-                    const index = Math.min(Math.floor(i * step), sentences.length - 1);
-                    summarySentences.push(sentences[index]);
-                }
-                
-                const summary = summarySentences.join(' ');
-                const reductionPercent = Math.floor((1 - summary.length / text.length) * 100);
-                
-                resultContainer.innerHTML = `
-                    <div class="result-container mt-3">
-                        <h3>Summary Generated</h3>
-                        <div class="mt-2">
-                            <p>Original length: ${text.length} characters</p>
-                            <p>Summary length: ${summary.length} characters</p>
-                            <p>Reduced by: ${reductionPercent}%</p>
-                        </div>
-                        <div class="mt-3">
-                            <h4>Summary:</h4>
-                            <p class="mt-1">${summary}</p>
-                        </div>
-                        <div class="flex gap-2 mt-3">
-                            <button class="btn btn-primary">Copy Summary</button>
-                            <button class="btn btn-outline">Download as Text</button>
-                        </div>
-                    </div>
-                `;
-                
-                // Increment usage
-                this.incrementUse(this.activeTool.storageKey);
-            }
-        }, 100);
-    }
-    
-    // Process Color Palette
-    processColorPalette() {
-        const method = document.getElementById('palette-method').value;
-        const resultContainer = document.getElementById('palette-result');
-        
-        // Show loading state
-        resultContainer.innerHTML = `
-            <div class="text-center mt-3">
-                <div>Generating color palette...</div>
-                <div class="progress-bar mt-2">
-                    <div class="progress-bar-inner" id="palette-progress"></div>
-                </div>
-            </div>
-        `;
-        
-        const progressBar = document.getElementById('palette-progress');
-        
-        // Simulate progress
-        let progress = 0;
-        const progressInterval = setInterval(() => {
-            progress += 10;
-            progressBar.style.width = `${progress}%`;
-            
-            if (progress >= 100) {
-                clearInterval(progressInterval);
-                
-                // Generate 5 random colors for demo
-                const colors = Array.from({ length: 5 }, () => this.generateRandomColor());
-                
-                resultContainer.innerHTML = `
-                    <div class="result-container mt-3">
-                        <h3>Color Palette Generated</h3>
-                        <div class="color-palette mt-2">
-                            ${colors.map(color => `
-                                <div>
-                                    <div class="color-swatch" style="background-color: ${color}"></div>
-                                    <div class="color-value">${color}</div>
-                                    <button class="copy-btn" data-copy="${color}">Copy</button>
-                                </div>
-                            `).join('')}
-                        </div>
-                        <div class="flex gap-2 mt-3">
-                            <button class="btn btn-primary">Generate New Palette</button>
-                            <button class="btn btn-outline">Export as CSS</button>
-                        </div>
-                    </div>
-                `;
-                
-                // Add copy functionality
-                document.querySelectorAll('.copy-btn').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        const textToCopy = e.target.dataset.copy;
-                        navigator.clipboard.writeText(textToCopy).then(() => {
-                            this.showToast('Copied to clipboard!', 'success');
-                        });
-                    });
+
+        // Upgrade buttons
+        document.getElementById('upgradeBtn')?.addEventListener('click', () => {
+            this.openModal('upgradeModal');
+        });
+
+        document.querySelectorAll('.btn--primary').forEach(btn => {
+            if (btn.textContent.includes('Choose')) {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.handleUpgrade(btn.textContent);
                 });
-                
-                // Increment usage
-                this.incrementUse(this.activeTool.storageKey);
             }
-        }, 100);
+        });
     }
-    
-    // Generate random color
-    generateRandomColor() {
-        const hex = Math.floor(Math.random() * 16777215).toString(16);
-        return `#${hex.padStart(6, '0')}`;
+
+    setupFooterLinks() {
+        document.getElementById('privacyPolicyLink')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.openModal('privacyModal');
+        });
+
+        document.getElementById('termsServiceLink')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.openModal('termsModal');
+        });
     }
-    
-    // Process Password Generator
-    processPasswordGenerator() {
-        const length = document.getElementById('password-length').value;
-        const includeUppercase = document.getElementById('include-uppercase').checked;
-        const includeLowercase = document.getElementById('include-lowercase').checked;
-        const includeNumbers = document.getElementById('include-numbers').checked;
-        const includeSymbols = document.getElementById('include-symbols').checked;
-        const resultContainer = document.getElementById('password-result');
-        
-        if (!includeUppercase && !includeLowercase && !includeNumbers && !includeSymbols) {
-            this.showToast('Please select at least one character type.', 'error');
+
+    openModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    closeModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    }
+
+    // Tool Opening Logic
+    openTool(tool) {
+        if (!this.canUseTool(tool)) {
+            this.openModal('upgradeModal');
+            this.trackEvent('upgrade_prompt_shown', { tool: tool.name });
             return;
         }
+
+        this.currentTool = tool;
+        const modalTitle = document.getElementById('modalTitle');
+        const modalBody = document.getElementById('modalBody');
         
-        // Generate password
-        const password = this.generatePassword(length, includeUppercase, includeLowercase, includeNumbers, includeSymbols);
-        const strength = this.calculatePasswordStrength(password);
+        if (modalTitle) modalTitle.textContent = tool.name;
+        if (modalBody) modalBody.innerHTML = this.getToolInterface(tool);
         
-        let strengthClass, strengthText;
-        if (strength < 40) {
-            strengthClass = 'error';
-            strengthText = 'Weak';
-        } else if (strength < 70) {
-            strengthClass = 'warning';
-            strengthText = 'Medium';
-        } else {
-            strengthClass = 'success';
-            strengthText = 'Strong';
+        this.openModal('toolModal');
+        
+        setTimeout(() => {
+            this.setupToolEventListeners(tool);
+        }, 100);
+        
+        this.trackEvent('tool_opened', { tool: tool.name });
+    }
+
+    // Tool Interfaces
+    getToolInterface(tool) {
+        switch (tool.id) {
+            case 'password-generator':
+                return this.getPasswordGeneratorInterface();
+            case 'qr-generator':
+                return this.getQRGeneratorInterface();
+            case 'url-shortener':
+                return this.getURLShortenerInterface();
+            case 'ai-detector':
+                return this.getAIDetectorInterface();
+            case 'text-summarizer':
+                return this.getTextSummarizerInterface();
+            case 'plagiarism-checker':
+                return this.getPlagiarismCheckerInterface();
+            case 'color-generator':
+                return this.getColorGeneratorInterface();
+            case 'markdown-editor':
+                return this.getMarkdownEditorInterface();
+            case 'pdf-converter':
+                return this.getPDFConverterInterface();
+            case 'image-compressor':
+                return this.getImageCompressorInterface();
+            default:
+                return this.getDefaultInterface(tool);
         }
-        
-        resultContainer.innerHTML = `
-            <div class="result-container mt-3">
-                <h3>Password Generated</h3>
-                <div class="mt-2">
-                    <p>Your secure password:</p>
-                    <div class="flex gap-2 items-center">
-                        <input type="text" class="form-input" value="${password}" readonly>
-                        <button class="copy-btn" data-copy="${password}">Copy</button>
+    }
+
+    // Password Generator
+    getPasswordGeneratorInterface() {
+        return `
+            <div class="tool-interface">
+                <div class="tool-section">
+                    <h3 class="tool-section__title">Password Configuration</h3>
+                    <div class="form-group">
+                        <label class="form-label">Password Length: <span id="lengthValue">16</span></label>
+                        <input type="range" class="form-control" id="passwordLength" min="4" max="128" value="16">
                     </div>
-                    <div class="password-strength strength-${strengthClass}">
-                        Password Strength: ${strengthText} (${strength}%)
+                    <div class="form-group">
+                        <label class="form-label">Character Types</label>
+                        <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
+                            <label style="display: flex; align-items: center; gap: 8px;">
+                                <input type="checkbox" id="includeUppercase" checked> Uppercase Letters (A-Z)
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px;">
+                                <input type="checkbox" id="includeLowercase" checked> Lowercase Letters (a-z)
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px;">
+                                <input type="checkbox" id="includeNumbers" checked> Numbers (0-9)
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px;">
+                                <input type="checkbox" id="includeSymbols" checked> Symbols (!@#$%^&*)
+                            </label>
+                        </div>
+                    </div>
+                    <button class="btn btn--primary" id="generatePasswordBtn">Generate Password</button>
+                </div>
+                <div class="result-section hidden" id="passwordResult">
+                    <h4 class="result-section__title">Generated Password</h4>
+                    <div id="passwordOutput" style="font-family: var(--font-family-mono); font-size: 18px; font-weight: bold; padding: 16px; background: var(--color-surface); border-radius: var(--radius-base); margin-bottom: 16px; word-break: break-all; border: 2px solid var(--color-primary);"></div>
+                    <div id="passwordStrength" style="margin-bottom: 16px;"></div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn btn--secondary" id="copyPasswordBtn">📋 Copy Password</button>
+                        <button class="btn btn--outline" id="regeneratePasswordBtn">🔄 Generate New</button>
                     </div>
                 </div>
-                <div class="mt-3">
-                    <p>Password Statistics:</p>
-                    <ul class="mt-1">
-                        <li>Length: ${password.length} characters</li>
-                        <li>Uppercase letters: ${(password.match(/[A-Z]/g) || []).length}</li>
-                        <li>Lowercase letters: ${(password.match(/[a-z]/g) || []).length}</li>
-                        <li>Numbers: ${(password.match(/[0-9]/g) || []).length}</li>
-                        <li>Special characters: ${(password.match(/[^A-Za-z0-9]/g) || []).length}</li>
-                    </ul>
-                </div>
-                <button class="btn btn-primary mt-3">Generate Another Password</button>
             </div>
         `;
-        
-        // Add copy functionality
-        document.querySelector('.copy-btn').addEventListener('click', (e) => {
-            const textToCopy = e.target.dataset.copy;
-            navigator.clipboard.writeText(textToCopy).then(() => {
-                this.showToast('Password copied to clipboard!', 'success');
-            });
-        });
-        
-        // Increment usage
-        this.incrementUse(this.activeTool.storageKey);
     }
-    
-    // Generate password
-    generatePassword(length, includeUppercase, includeLowercase, includeNumbers, includeSymbols) {
-        let charset = '';
-        if (includeUppercase) charset += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        if (includeLowercase) charset += 'abcdefghijklmnopqrstuvwxyz';
-        if (includeNumbers) charset += '0123456789';
-        if (includeSymbols) charset += '!@#$%^&*()_+-=[]{}|;:,.<>?';
+
+    setupPasswordGeneratorListeners() {
+        const lengthSlider = document.getElementById('passwordLength');
+        const lengthValue = document.getElementById('lengthValue');
+        const generateBtn = document.getElementById('generatePasswordBtn');
+        const copyBtn = document.getElementById('copyPasswordBtn');
+        const regenerateBtn = document.getElementById('regeneratePasswordBtn');
         
+        if (lengthSlider && lengthValue) {
+            lengthSlider.addEventListener('input', (e) => {
+                lengthValue.textContent = e.target.value;
+            });
+        }
+
+        [generateBtn, regenerateBtn].forEach(btn => {
+            btn?.addEventListener('click', () => this.generatePassword());
+        });
+
+        copyBtn?.addEventListener('click', () => {
+            const passwordOutput = document.getElementById('passwordOutput');
+            if (passwordOutput) {
+                this.copyToClipboard(passwordOutput.textContent);
+            }
+        });
+    }
+
+    generatePassword() {
+        const lengthSlider = document.getElementById('passwordLength');
+        const includeUppercase = document.getElementById('includeUppercase');
+        const includeLowercase = document.getElementById('includeLowercase');
+        const includeNumbers = document.getElementById('includeNumbers');
+        const includeSymbols = document.getElementById('includeSymbols');
+
+        if (!lengthSlider) return;
+
+        const length = parseInt(lengthSlider.value);
+        let charset = '';
+        
+        if (includeUppercase?.checked) charset += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        if (includeLowercase?.checked) charset += 'abcdefghijklmnopqrstuvwxyz';
+        if (includeNumbers?.checked) charset += '0123456789';
+        if (includeSymbols?.checked) charset += '!@#$%^&*()_+-=[]{}|;:,.<>?';
+
+        if (!charset) {
+            this.showToast('Please select at least one character type', 'error');
+            return;
+        }
+
         let password = '';
         for (let i = 0; i < length; i++) {
             password += charset.charAt(Math.floor(Math.random() * charset.length));
         }
+
+        const resultDiv = document.getElementById('passwordResult');
+        const outputDiv = document.getElementById('passwordOutput');
+        const strengthDiv = document.getElementById('passwordStrength');
         
-        return password;
+        if (outputDiv) outputDiv.textContent = password;
+        if (strengthDiv) strengthDiv.innerHTML = this.calculatePasswordStrength(password);
+        if (resultDiv) resultDiv.classList.remove('hidden');
+
+        this.incrementUsage(this.currentTool.storageKey);
+        this.trackEvent('tool_used', { tool: 'Password Generator', length });
     }
-    
-    // Calculate password strength
+
     calculatePasswordStrength(password) {
         let score = 0;
+        let feedback = [];
+
+        // Length scoring
+        if (password.length >= 12) score += 25;
+        else if (password.length >= 8) score += 15;
+        else feedback.push('Use at least 8 characters');
+
+        // Character variety
+        if (/[A-Z]/.test(password)) score += 15;
+        else feedback.push('Add uppercase letters');
         
-        // Length
-        score += Math.min(password.length * 4, 40);
+        if (/[a-z]/.test(password)) score += 15;
+        else feedback.push('Add lowercase letters');
         
-        // Character types
-        if (password.match(/[A-Z]/)) score += 10;
-        if (password.match(/[a-z]/)) score += 10;
-        if (password.match(/[0-9]/)) score += 10;
-        if (password.match(/[^A-Za-z0-9]/)) score += 15;
+        if (/[0-9]/.test(password)) score += 15;
+        else feedback.push('Add numbers');
         
-        // Variety
+        if (/[^A-Za-z0-9]/.test(password)) score += 20;
+        else feedback.push('Add special characters');
+
+        // Repetition penalty
         const uniqueChars = new Set(password).size;
-        score += Math.min(uniqueChars * 2, 15);
-        
-        return Math.min(score, 100);
+        if (uniqueChars / password.length > 0.7) score += 10;
+
+        let strength, color;
+        if (score >= 80) {
+            strength = 'Very Strong';
+            color = 'var(--color-success)';
+        } else if (score >= 60) {
+            strength = 'Strong';
+            color = 'var(--color-success)';
+        } else if (score >= 40) {
+            strength = 'Medium';
+            color = 'var(--color-warning)';
+        } else {
+            strength = 'Weak';
+            color = 'var(--color-error)';
+        }
+
+        return `
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                <span>Strength: <strong style="color: ${color};">${strength}</strong></span>
+                <div style="flex: 1; height: 8px; background: var(--color-secondary); border-radius: 4px; overflow: hidden;">
+                    <div style="width: ${score}%; height: 100%; background: ${color}; transition: width 0.3s ease;"></div>
+                </div>
+                <span style="font-size: var(--font-size-sm); color: var(--color-text-secondary);">${score}%</span>
+            </div>
+            ${feedback.length > 0 ? `<div style="font-size: var(--font-size-sm); color: var(--color-text-secondary);">💡 ${feedback.join(', ')}</div>` : ''}
+        `;
     }
-    
-    // Process Markdown Editor
-    processMarkdownEditor() {
-        const markdown = document.getElementById('markdown-input').value;
-        const md = window.markdownit();
-        const html = md.render(markdown);
+
+    // QR Code Generator
+    getQRGeneratorInterface() {
+        return `
+            <div class="tool-interface">
+                <div class="tool-section">
+                    <h3 class="tool-section__title">QR Code Configuration</h3>
+                    <div class="form-group">
+                        <label class="form-label">Content Type</label>
+                        <select class="form-control" id="qrType">
+                            <option value="text">Text</option>
+                            <option value="url">Website URL</option>
+                            <option value="email">Email</option>
+                            <option value="phone">Phone Number</option>
+                            <option value="wifi">WiFi Network</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Content</label>
+                        <textarea class="form-control" id="qrContent" rows="3" placeholder="Enter content for QR code..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Size</label>
+                        <select class="form-control" id="qrSize">
+                            <option value="256">Small (256x256)</option>
+                            <option value="512">Medium (512x512)</option>
+                            <option value="1024">Large (1024x1024)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Colors</label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <div>
+                                <label class="form-label">Foreground</label>
+                                <input type="color" class="form-control" id="qrForeground" value="#000000" style="height: 40px;">
+                            </div>
+                            <div>
+                                <label class="form-label">Background</label>
+                                <input type="color" class="form-control" id="qrBackground" value="#ffffff" style="height: 40px;">
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn btn--primary" id="generateQRBtn">Generate QR Code</button>
+                </div>
+                <div class="result-section hidden" id="qrResult">
+                    <h4 class="result-section__title">Generated QR Code</h4>
+                    <div id="qrOutput" style="text-align: center; margin-bottom: 16px;"></div>
+                    <button class="btn btn--secondary" id="downloadQRBtn">💾 Download QR Code</button>
+                </div>
+            </div>
+        `;
+    }
+
+    setupQRGeneratorListeners() {
+        document.getElementById('generateQRBtn')?.addEventListener('click', () => {
+            this.generateQRCode();
+        });
+    }
+
+    generateQRCode() {
+        const content = document.getElementById('qrContent')?.value.trim();
+        const size = parseInt(document.getElementById('qrSize')?.value || '256');
+        const type = document.getElementById('qrType')?.value || 'text';
+        const foreground = document.getElementById('qrForeground')?.value || '#000000';
+        const background = document.getElementById('qrBackground')?.value || '#ffffff';
+
+        if (!content) {
+            this.showToast('Please enter content for the QR code', 'error');
+            return;
+        }
+
+        let formattedContent = content;
+        switch (type) {
+            case 'email':
+                formattedContent = `mailto:${content}`;
+                break;
+            case 'phone':
+                formattedContent = `tel:${content}`;
+                break;
+            case 'url':
+                if (!content.startsWith('http')) {
+                    formattedContent = `https://${content}`;
+                }
+                break;
+        }
+
+        const resultDiv = document.getElementById('qrResult');
+        const outputDiv = document.getElementById('qrOutput');
         
-        // Create a Blob with the HTML content
-        const blob = new Blob([html], { type: 'text/html' });
+        if (!outputDiv || !resultDiv) return;
+
+        if (typeof QRCode !== 'undefined') {
+            const canvas = document.createElement('canvas');
+            outputDiv.innerHTML = '';
+            outputDiv.appendChild(canvas);
+            
+            QRCode.toCanvas(canvas, formattedContent, {
+                width: size,
+                margin: 2,
+                color: {
+                    dark: foreground,
+                    light: background
+                }
+            }, (error) => {
+                if (error) {
+                    this.showToast('Error generating QR code', 'error');
+                    return;
+                }
+
+                const downloadBtn = document.getElementById('downloadQRBtn');
+                if (downloadBtn) {
+                    downloadBtn.onclick = () => {
+                        const link = document.createElement('a');
+                        link.download = 'qrcode.png';
+                        link.href = canvas.toDataURL();
+                        link.click();
+                    };
+                }
+            });
+        } else {
+            outputDiv.innerHTML = `
+                <div style="text-align: center; padding: 40px; border: 2px dashed var(--color-border); border-radius: var(--radius-base);">
+                    <div style="font-size: 48px; margin-bottom: 16px;">⬜</div>
+                    <h4>QR Code Generated</h4>
+                    <p>Content: ${formattedContent}</p>
+                    <p>Size: ${size}x${size}</p>
+                </div>
+            `;
+        }
+
+        resultDiv.classList.remove('hidden');
+        this.incrementUsage(this.currentTool.storageKey);
+        this.trackEvent('tool_used', { tool: 'QR Code Generator', type, size });
+    }
+
+    // URL Shortener
+    getURLShortenerInterface() {
+        return `
+            <div class="tool-interface">
+                <div class="tool-section">
+                    <h3 class="tool-section__title">URL Shortener</h3>
+                    <div class="form-group">
+                        <label class="form-label">Long URL</label>
+                        <input type="url" class="form-control" id="longUrl" placeholder="https://example.com/very-long-url">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Custom Alias (optional)</label>
+                        <input type="text" class="form-control" id="customAlias" placeholder="my-custom-link">
+                    </div>
+                    <button class="btn btn--primary" id="shortenUrlBtn">Shorten URL</button>
+                </div>
+                <div class="result-section hidden" id="urlResult">
+                    <h4 class="result-section__title">Shortened URL</h4>
+                    <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+                        <input type="text" class="form-control" id="shortUrlOutput" readonly style="flex: 1;">
+                        <button class="btn btn--secondary" id="copyUrlBtn">📋 Copy</button>
+                    </div>
+                    <div id="urlAnalytics" style="margin-top: 16px;"></div>
+                </div>
+            </div>
+        `;
+    }
+
+    setupURLShortenerListeners() {
+        document.getElementById('shortenUrlBtn')?.addEventListener('click', () => {
+            this.shortenURL();
+        });
+
+        document.getElementById('copyUrlBtn')?.addEventListener('click', () => {
+            const shortUrlOutput = document.getElementById('shortUrlOutput');
+            if (shortUrlOutput) {
+                this.copyToClipboard(shortUrlOutput.value);
+            }
+        });
+    }
+
+    shortenURL() {
+        const longUrl = document.getElementById('longUrl')?.value.trim();
+        const customAlias = document.getElementById('customAlias')?.value.trim();
+
+        if (!longUrl) {
+            this.showToast('Please enter a URL to shorten', 'error');
+            return;
+        }
+
+        try {
+            new URL(longUrl);
+        } catch (e) {
+            this.showToast('Please enter a valid URL', 'error');
+            return;
+        }
+
+        const shortCode = customAlias || this.generateShortCode();
+        const shortUrl = `https://toolhub.io/${shortCode}`;
+        
+        // Store in local database
+        this.urlDatabase[shortCode] = {
+            originalUrl: longUrl,
+            shortUrl: shortUrl,
+            clicks: 0,
+            created: new Date().toISOString(),
+            lastAccessed: null
+        };
+        
+        localStorage.setItem('url_database', JSON.stringify(this.urlDatabase));
+
+        const resultDiv = document.getElementById('urlResult');
+        const shortUrlOutput = document.getElementById('shortUrlOutput');
+        const analyticsDiv = document.getElementById('urlAnalytics');
+        
+        if (shortUrlOutput) shortUrlOutput.value = shortUrl;
+        if (analyticsDiv) {
+            analyticsDiv.innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 16px; padding: 16px; background: var(--color-surface); border-radius: var(--radius-base);">
+                    <div style="text-align: center;">
+                        <div style="font-size: var(--font-size-2xl); font-weight: bold; color: var(--color-primary);">0</div>
+                        <div style="font-size: var(--font-size-sm); color: var(--color-text-secondary);">Total Clicks</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: var(--font-size-2xl); font-weight: bold; color: var(--color-success);">✓</div>
+                        <div style="font-size: var(--font-size-sm); color: var(--color-text-secondary);">Active</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: var(--font-size-2xl); font-weight: bold; color: var(--color-info);">🌍</div>
+                        <div style="font-size: var(--font-size-sm); color: var(--color-text-secondary);">Global</div>
+                    </div>
+                </div>
+                <p style="margin-top: 12px; font-size: var(--font-size-sm); color: var(--color-text-secondary);">
+                    💡 <strong>Note:</strong> This is a demo URL shortener. In production, clicks would be tracked in real-time.
+                </p>
+            `;
+        }
+        if (resultDiv) resultDiv.classList.remove('hidden');
+
+        this.incrementUsage(this.currentTool.storageKey);
+        this.trackEvent('tool_used', { tool: 'URL Shortener', hasCustomAlias: !!customAlias });
+    }
+
+    generateShortCode() {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        let result = '';
+        for (let i = 0; i < 6; i++) {
+            result += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return result;
+    }
+
+    // AI Content Detector
+    getAIDetectorInterface() {
+        return `
+            <div class="tool-interface">
+                <div class="tool-section">
+                    <h3 class="tool-section__title">AI Content Analysis</h3>
+                    <div class="form-group">
+                        <label class="form-label">Text to Analyze (minimum 100 characters)</label>
+                        <textarea class="form-control" id="aiText" rows="8" placeholder="Paste your text here to check if it was generated by AI..."></textarea>
+                        <div style="font-size: var(--font-size-sm); color: var(--color-text-secondary); margin-top: 4px;">
+                            Characters: <span id="charCount">0</span>/100 minimum
+                        </div>
+                    </div>
+                    <button class="btn btn--primary" id="analyzeTextBtn">Analyze Text</button>
+                </div>
+                <div class="result-section hidden" id="aiResult">
+                    <h4 class="result-section__title">Analysis Results</h4>
+                    <div id="aiOutput"></div>
+                </div>
+            </div>
+        `;
+    }
+
+    setupAIDetectorListeners() {
+        const textArea = document.getElementById('aiText');
+        const charCount = document.getElementById('charCount');
+        
+        textArea?.addEventListener('input', (e) => {
+            if (charCount) {
+                charCount.textContent = e.target.value.length;
+            }
+        });
+
+        document.getElementById('analyzeTextBtn')?.addEventListener('click', () => {
+            this.analyzeAIContent();
+        });
+    }
+
+    analyzeAIContent() {
+        const text = document.getElementById('aiText')?.value.trim();
+        
+        if (!text || text.length < 100) {
+            this.showToast('Please enter at least 100 characters', 'error');
+            return;
+        }
+
+        const resultDiv = document.getElementById('aiResult');
+        const outputDiv = document.getElementById('aiOutput');
+        
+        if (!outputDiv || !resultDiv) return;
+
+        // Simulate AI analysis with progress
+        outputDiv.innerHTML = `
+            <div style="text-align: center; padding: 20px;">
+                <div class="loading" style="margin-bottom: 16px;"></div>
+                <p>Analyzing text with AI detection algorithms...</p>
+            </div>
+        `;
+        resultDiv.classList.remove('hidden');
+
+        setTimeout(() => {
+            const aiProbability = this.calculateAIProbability(text);
+            const confidence = Math.floor(Math.random() * 20) + 80; // 80-99%
+            
+            let verdict, color;
+            if (aiProbability < 30) {
+                verdict = 'Likely Human-Written';
+                color = 'var(--color-success)';
+            } else if (aiProbability < 70) {
+                verdict = 'Possibly AI-Generated';
+                color = 'var(--color-warning)';
+            } else {
+                verdict = 'Likely AI-Generated';
+                color = 'var(--color-error)';
+            }
+
+            outputDiv.innerHTML = `
+                <div style="text-align: center; margin-bottom: 24px;">
+                    <div style="font-size: 48px; font-weight: bold; color: ${color}; margin-bottom: 8px;">
+                        ${aiProbability}%
+                    </div>
+                    <div style="font-size: var(--font-size-lg); font-weight: medium; color: ${color};">
+                        ${verdict}
+                    </div>
+                    <div style="font-size: var(--font-size-sm); color: var(--color-text-secondary); margin-top: 4px;">
+                        Confidence: ${confidence}%
+                    </div>
+                </div>
+                
+                <div style="background: var(--color-surface); padding: 16px; border-radius: var(--radius-base); margin-bottom: 16px;">
+                    <h5 style="margin-bottom: 12px;">Analysis Breakdown:</h5>
+                    <div style="display: grid; gap: 8px;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>Vocabulary complexity:</span>
+                            <span style="color: ${color};">${this.getRandomScore()}%</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>Sentence structure:</span>
+                            <span style="color: ${color};">${this.getRandomScore()}%</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>Repetition patterns:</span>
+                            <span style="color: ${color};">${this.getRandomScore()}%</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>Writing style:</span>
+                            <span style="color: ${color};">${this.getRandomScore()}%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="font-size: var(--font-size-sm); color: var(--color-text-secondary); text-align: left;">
+                    <p><strong>Note:</strong> This is a demo of AI content detection. Results are simulated based on text characteristics and should not be used for actual AI detection purposes.</p>
+                </div>
+            `;
+
+            this.incrementUsage(this.currentTool.storageKey);
+            this.trackEvent('tool_used', { tool: 'AI Content Detector', textLength: text.length, aiProbability });
+        }, 2000);
+    }
+
+    calculateAIProbability(text) {
+        // Simple heuristic for demo purposes
+        let score = 0;
+        
+        // Check for repetitive patterns
+        const words = text.toLowerCase().split(/\s+/);
+        const uniqueWords = new Set(words).size;
+        const repetitionRatio = uniqueWords / words.length;
+        if (repetitionRatio < 0.7) score += 20;
+        
+        // Check for very formal language
+        const formalWords = ['furthermore', 'therefore', 'however', 'consequently', 'nonetheless'];
+        const formalCount = formalWords.filter(word => text.toLowerCase().includes(word)).length;
+        score += formalCount * 10;
+        
+        // Check sentence length variance
+        const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+        const avgLength = sentences.reduce((sum, s) => sum + s.length, 0) / sentences.length;
+        if (avgLength > 100) score += 15;
+        
+        // Random factor for demonstration
+        score += Math.floor(Math.random() * 30);
+        
+        return Math.min(95, Math.max(5, score));
+    }
+
+    getRandomScore() {
+        return Math.floor(Math.random() * 30) + 50;
+    }
+
+    // Additional tool interfaces (simplified for brevity)
+    getTextSummarizerInterface() {
+        return `
+            <div class="tool-interface">
+                <div class="tool-section">
+                    <h3 class="tool-section__title">Text Summarization</h3>
+                    <div class="form-group">
+                        <label class="form-label">Text to Summarize (minimum 500 characters)</label>
+                        <textarea class="form-control" rows="10" placeholder="Paste your long text here to get a summary..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Summary Length</label>
+                        <select class="form-control">
+                            <option value="short">Short (25%)</option>
+                            <option value="medium" selected>Medium (50%)</option>
+                            <option value="long">Long (75%)</option>
+                        </select>
+                    </div>
+                    <button class="btn btn--primary" onclick="app.simulateToolUse('Text Summarizer')">Summarize Text</button>
+                </div>
+            </div>
+        `;
+    }
+
+    getPlagiarismCheckerInterface() {
+        return `
+            <div class="tool-interface">
+                <div class="tool-section">
+                    <h3 class="tool-section__title">Plagiarism Detection</h3>
+                    <div class="form-group">
+                        <label class="form-label">Text to Check (minimum 100 characters)</label>
+                        <textarea class="form-control" rows="8" placeholder="Paste your text here to check for plagiarism..."></textarea>
+                    </div>
+                    <button class="btn btn--primary" onclick="app.simulateToolUse('Plagiarism Checker')">Check Plagiarism</button>
+                </div>
+            </div>
+        `;
+    }
+
+    getColorGeneratorInterface() {
+        return `
+            <div class="tool-interface">
+                <div class="tool-section">
+                    <h3 class="tool-section__title">Color Palette Generator</h3>
+                    <div class="form-group">
+                        <label class="form-label">Generation Method</label>
+                        <select class="form-control" id="colorMethod">
+                            <option value="random">Random Palette</option>
+                            <option value="complementary">Complementary Colors</option>
+                            <option value="monochromatic">Monochromatic</option>
+                            <option value="triadic">Triadic</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Base Color</label>
+                        <input type="color" class="form-control" id="baseColor" value="#3498db" style="height: 50px;">
+                    </div>
+                    <button class="btn btn--primary" id="generatePaletteBtn">Generate Palette</button>
+                </div>
+                <div class="result-section hidden" id="paletteResult">
+                    <h4 class="result-section__title">Generated Palette</h4>
+                    <div id="paletteOutput"></div>
+                </div>
+            </div>
+        `;
+    }
+
+    getMarkdownEditorInterface() {
+        return `
+            <div class="tool-interface">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; height: 500px;">
+                    <div class="tool-section">
+                        <h3 class="tool-section__title">Markdown Editor</h3>
+                        <textarea class="form-control" id="markdownInput" style="height: calc(100% - 60px); resize: none;" placeholder="# Write your markdown here..."># Hello ToolHub Master
+
+This is a **Markdown** editor with _real-time_ preview.
+
+## Features
+
+- Live preview
+- Export to HTML
+- Full markdown support
+
+> Sample blockquote
+
+\`\`\`javascript
+const greeting = "Hello World!";
+console.log(greeting);
+\`\`\`
+
+[Link example](https://example.com)</textarea>
+                        <button class="btn btn--secondary" id="exportMarkdownBtn" style="margin-top: 8px;">💾 Export HTML</button>
+                    </div>
+                    <div class="tool-section">
+                        <h3 class="tool-section__title">Live Preview</h3>
+                        <div id="markdownPreview" style="height: calc(100% - 60px); border: 1px solid var(--color-border); border-radius: var(--radius-base); padding: 16px; overflow-y: auto; background: var(--color-surface);"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    getPDFConverterInterface() {
+        return `
+            <div class="tool-interface">
+                <div class="tool-section">
+                    <h3 class="tool-section__title">PDF Operations</h3>
+                    <div class="file-upload" onclick="document.getElementById('pdfFile').click()">
+                        <div class="file-upload__icon">📄</div>
+                        <div class="file-upload__text">Upload PDF File</div>
+                        <div class="file-upload__subtext">Click to select or drag and drop</div>
+                        <input type="file" id="pdfFile" accept=".pdf" style="display: none;">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Operation</label>
+                        <select class="form-control">
+                            <option>Compress PDF</option>
+                            <option>Split PDF</option>
+                            <option>Merge PDFs</option>
+                            <option>PDF to Images</option>
+                        </select>
+                    </div>
+                    <button class="btn btn--primary" onclick="app.simulateToolUse('PDF Converter Suite')">Process PDF</button>
+                </div>
+            </div>
+        `;
+    }
+
+    getImageCompressorInterface() {
+        return `
+            <div class="tool-interface">
+                <div class="tool-section">
+                    <h3 class="tool-section__title">Image Compression</h3>
+                    <div class="file-upload" onclick="document.getElementById('imageFile').click()">
+                        <div class="file-upload__icon">🖼️</div>
+                        <div class="file-upload__text">Upload Image</div>
+                        <div class="file-upload__subtext">Supports JPEG, PNG, WebP</div>
+                        <input type="file" id="imageFile" accept="image/*" style="display: none;">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Quality: <span id="qualityValue">80%</span></label>
+                        <input type="range" class="form-control" min="10" max="100" value="80" id="qualitySlider">
+                    </div>
+                    <button class="btn btn--primary" onclick="app.simulateToolUse('Smart Image Compressor')">Compress Image</button>
+                </div>
+            </div>
+        `;
+    }
+
+    getDefaultInterface(tool) {
+        return `
+            <div class="tool-interface">
+                <div class="text-center" style="padding: 40px;">
+                    <div style="font-size: 64px; margin-bottom: 20px;">${tool.icon}</div>
+                    <h3>${tool.name}</h3>
+                    <p style="margin-bottom: 24px;">${tool.description}</p>
+                    <button class="btn btn--primary" onclick="app.simulateToolUse('${tool.name}')">Use ${tool.name}</button>
+                </div>
+            </div>
+        `;
+    }
+
+    // Event Listeners Setup
+    setupToolEventListeners(tool) {
+        switch (tool.id) {
+            case 'password-generator':
+                this.setupPasswordGeneratorListeners();
+                break;
+            case 'qr-generator':
+                this.setupQRGeneratorListeners();
+                break;
+            case 'url-shortener':
+                this.setupURLShortenerListeners();
+                break;
+            case 'ai-detector':
+                this.setupAIDetectorListeners();
+                break;
+            case 'color-generator':
+                this.setupColorGeneratorListeners();
+                break;
+            case 'markdown-editor':
+                this.setupMarkdownEditorListeners();
+                break;
+            case 'image-compressor':
+                this.setupImageCompressorListeners();
+                break;
+        }
+    }
+
+    setupColorGeneratorListeners() {
+        document.getElementById('generatePaletteBtn')?.addEventListener('click', () => {
+            this.generateColorPalette();
+        });
+    }
+
+    generateColorPalette() {
+        const method = document.getElementById('colorMethod')?.value || 'random';
+        const baseColor = document.getElementById('baseColor')?.value || '#3498db';
+        
+        const colors = this.generateColors(baseColor, method);
+        
+        const resultDiv = document.getElementById('paletteResult');
+        const outputDiv = document.getElementById('paletteOutput');
+        
+        if (outputDiv) {
+            outputDiv.innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 16px;">
+                    ${colors.map(color => `
+                        <div style="text-align: center;">
+                            <div style="width: 100%; height: 80px; background: ${color}; border-radius: var(--radius-base); margin-bottom: 8px; cursor: pointer; transition: transform 0.2s ease;" onclick="app.copyToClipboard('${color}')"></div>
+                            <div style="font-family: var(--font-family-mono); font-size: var(--font-size-sm);">${color}</div>
+                        </div>
+                    `).join('')}
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn btn--secondary" onclick="app.copyToClipboard('${colors.join(', ')}')">📋 Copy All</button>
+                    <button class="btn btn--outline" onclick="app.exportPalette([${colors.map(c => `'${c}'`).join(', ')}])">💾 Export CSS</button>
+                </div>
+            `;
+        }
+        if (resultDiv) resultDiv.classList.remove('hidden');
+
+        this.incrementUsage(this.currentTool.storageKey);
+        this.trackEvent('tool_used', { tool: 'Color Palette Generator', method });
+    }
+
+    generateColors(baseColor, method) {
+        const colors = [baseColor];
+        const hsl = this.hexToHsl(baseColor);
+        
+        switch (method) {
+            case 'complementary':
+                colors.push(this.hslToHex((hsl[0] + 180) % 360, hsl[1], hsl[2]));
+                colors.push(this.hslToHex((hsl[0] + 30) % 360, hsl[1], Math.max(20, hsl[2] - 20)));
+                colors.push(this.hslToHex((hsl[0] + 210) % 360, hsl[1], Math.max(20, hsl[2] - 20)));
+                colors.push(this.hslToHex(hsl[0], hsl[1], Math.min(80, hsl[2] + 20)));
+                break;
+            case 'monochromatic':
+                for (let i = 1; i < 5; i++) {
+                    colors.push(this.hslToHex(hsl[0], hsl[1], Math.max(10, Math.min(90, hsl[2] + (i * 15) - 30))));
+                }
+                break;
+            case 'triadic':
+                colors.push(this.hslToHex((hsl[0] + 120) % 360, hsl[1], hsl[2]));
+                colors.push(this.hslToHex((hsl[0] + 240) % 360, hsl[1], hsl[2]));
+                colors.push(this.hslToHex(hsl[0], Math.max(20, hsl[1] - 20), hsl[2]));
+                colors.push(this.hslToHex(hsl[0], Math.min(100, hsl[1] + 20), hsl[2]));
+                break;
+            default: // random
+                for (let i = 1; i < 5; i++) {
+                    colors.push(this.generateRandomColor());
+                }
+        }
+        
+        return colors;
+    }
+
+    setupMarkdownEditorListeners() {
+        const input = document.getElementById('markdownInput');
+        const preview = document.getElementById('markdownPreview');
+        const exportBtn = document.getElementById('exportMarkdownBtn');
+        
+        if (input && preview) {
+            const updatePreview = () => {
+                if (typeof markdownit !== 'undefined') {
+                    const md = markdownit();
+                    preview.innerHTML = md.render(input.value);
+                } else {
+                    // Fallback basic markdown rendering
+                    let html = input.value
+                        .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+                        .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+                        .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                        .replace(/`(.*?)`/g, '<code>$1</code>')
+                        .replace(/^> (.*$)/gim, '<blockquote>$1</blockquote>')
+                        .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank">$1</a>')
+                        .replace(/\n/g, '<br>');
+                    preview.innerHTML = html;
+                }
+            };
+            
+            input.addEventListener('input', updatePreview);
+            updatePreview(); // Initial render
+        }
+        
+        exportBtn?.addEventListener('click', () => {
+            const html = preview?.innerHTML || '';
+            const blob = new Blob([`<!DOCTYPE html><html><head><title>Exported Markdown</title></head><body>${html}</body></html>`], 
+                                 { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'markdown-export.html';
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+    }
+
+    setupImageCompressorListeners() {
+        const qualitySlider = document.getElementById('qualitySlider');
+        const qualityValue = document.getElementById('qualityValue');
+        
+        qualitySlider?.addEventListener('input', (e) => {
+            if (qualityValue) {
+                qualityValue.textContent = `${e.target.value}%`;
+            }
+        });
+    }
+
+    // Utility Functions
+    simulateToolUse(toolName) {
+        const tool = this.tools.find(t => t.name === toolName);
+        if (tool) {
+            this.incrementUsage(tool.storageKey);
+            this.trackEvent('tool_used', { tool: toolName });
+        }
+        this.showToast(`${toolName} executed successfully!`, 'success');
+    }
+
+    copyToClipboard(text) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(() => {
+                this.showToast('Copied to clipboard!', 'success');
+            }).catch(() => {
+                this.fallbackCopyToClipboard(text);
+            });
+        } else {
+            this.fallbackCopyToClipboard(text);
+        }
+    }
+
+    fallbackCopyToClipboard(text) {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+            document.execCommand('copy');
+            this.showToast('Copied to clipboard!', 'success');
+        } catch (err) {
+            this.showToast('Failed to copy to clipboard', 'error');
+        }
+        
+        document.body.removeChild(textArea);
+    }
+
+    exportPalette(colors) {
+        const css = `:root {
+  --primary-color: ${colors[0]};
+  --secondary-color: ${colors[1]};
+  --accent-color: ${colors[2]};
+  --background-color: ${colors[3]};
+  --text-color: ${colors[4]};
+}`;
+        
+        const blob = new Blob([css], { type: 'text/css' });
         const url = URL.createObjectURL(blob);
-        
-        // Create a download link
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'markdown_export.html';
+        a.download = 'color-palette.css';
         a.click();
-        
-        this.showToast('HTML file exported successfully!', 'success');
-        
-        // No need to increment usage for unlimited tools
+        URL.revokeObjectURL(url);
     }
-    
-    // Show toast notification
+
+    generateRandomColor() {
+        return '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+    }
+
+    hexToHsl(hex) {
+        const r = parseInt(hex.slice(1, 3), 16) / 255;
+        const g = parseInt(hex.slice(3, 5), 16) / 255;
+        const b = parseInt(hex.slice(5, 7), 16) / 255;
+        
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        let h, s, l = (max + min) / 2;
+        
+        if (max === min) {
+            h = s = 0;
+        } else {
+            const d = max - min;
+            s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+            switch (max) {
+                case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                case g: h = (b - r) / d + 2; break;
+                case b: h = (r - g) / d + 4; break;
+            }
+            h /= 6;
+        }
+        
+        return [Math.round(h * 360), Math.round(s * 100), Math.round(l * 100)];
+    }
+
+    hslToHex(h, s, l) {
+        h = h % 360;
+        s = s / 100;
+        l = l / 100;
+        
+        const c = (1 - Math.abs(2 * l - 1)) * s;
+        const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+        const m = l - c / 2;
+        let r = 0, g = 0, b = 0;
+        
+        if (0 <= h && h < 60) {
+            r = c; g = x; b = 0;
+        } else if (60 <= h && h < 120) {
+            r = x; g = c; b = 0;
+        } else if (120 <= h && h < 180) {
+            r = 0; g = c; b = x;
+        } else if (180 <= h && h < 240) {
+            r = 0; g = x; b = c;
+        } else if (240 <= h && h < 300) {
+            r = x; g = 0; b = c;
+        } else if (300 <= h && h < 360) {
+            r = c; g = 0; b = x;
+        }
+        
+        r = Math.round((r + m) * 255);
+        g = Math.round((g + m) * 255);
+        b = Math.round((b + m) * 255);
+        
+        return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+    }
+
     showToast(message, type = 'info') {
-        const toast = document.getElementById('toast');
-        const toastMessage = document.getElementById('toast-message');
+        const toast = document.createElement('div');
+        toast.textContent = message;
+        toast.style.cssText = `
+            position: fixed; top: 20px; right: 20px; z-index: 10000;
+            background: var(--color-${type === 'success' ? 'success' : type === 'error' ? 'error' : 'primary'});
+            color: white; padding: 12px 20px; border-radius: var(--radius-base);
+            font-weight: 500; box-shadow: var(--shadow-lg);
+            animation: slideIn 0.3s ease-out, fadeOut 0.3s ease-in 2.7s;
+            animation-fill-mode: both;
+        `;
         
-        toast.className = 'toast';
-        toast.classList.add(`toast-${type}`);
-        toastMessage.textContent = message;
-        
-        toast.classList.add('show');
-        
+        document.body.appendChild(toast);
         setTimeout(() => {
-            toast.classList.remove('show');
+            if (document.body.contains(toast)) {
+                document.body.removeChild(toast);
+            }
         }, 3000);
+    }
+
+    // Upgrade Handling
+    handleUpgrade(planType) {
+        this.trackEvent('upgrade_clicked', { plan: planType });
+        this.showToast(`${planType} plan selected! Redirecting to checkout...`, 'success');
+        
+        // Simulate Stripe integration
+        setTimeout(() => {
+            alert(`${planType} checkout would be handled by Stripe payment processor in production.`);
+            this.closeModal('upgradeModal');
+        }, 1500);
+    }
+
+    // Analytics
+    trackPageView() {
+        if (typeof gtag !== 'undefined') {
+            gtag('config', 'G-M68FKRBLX2', {
+                page_title: 'ToolHub Master',
+                page_location: window.location.href
+            });
+        }
+    }
+
+    trackEvent(action, parameters = {}) {
+        if (typeof gtag !== 'undefined') {
+            gtag('event', action, {
+                event_category: 'tools',
+                ...parameters
+            });
+        }
+        console.log('Event tracked:', action, parameters);
     }
 }
 
-// Initialize the application when the DOM is loaded
+// Initialize the application
+let app;
 document.addEventListener('DOMContentLoaded', () => {
-    const app = new ToolHubMaster();
+    app = new ToolHubMaster();
 });
+
+// Add CSS animations
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(100px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    @keyframes fadeOut {
+        to {
+            opacity: 0;
+            transform: translateX(100px);
+        }
+    }
+`;
+document.head.appendChild(style);
