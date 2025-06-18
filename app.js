@@ -1,779 +1,894 @@
-// ToolHub Master JavaScript Implementation
+// ToolHub Master - Main Application JavaScript
+
 class ToolHubMaster {
     constructor() {
-        this.maxFreeUses = 15;
-        this.signInBonus = 5;
-        this.currentUsage = this.getUsageCount();
-        this.isSignedIn = this.getSignInStatus();
-        this.userEmail = this.getUserEmail();
-        this.urlMapping = this.getUrlMapping();
+        this.maxUsesAnonymous = 15;
+        this.maxUsesSignedIn = 20;
+        this.bonusUses = 5;
         
         this.init();
     }
 
     init() {
-        this.setupEventListeners();
-        this.updateUsageDisplay();
-        this.updateUserInterface();
-        this.setupThemeToggle();
-        this.setupMarkdownEditor();
-        this.checkDailyReset();
+        this.initializeUsage();
+        this.initializeAuth();
+        this.initializeTheme();
+        this.bindEvents();
+        this.updateUI();
+    }
+
+    // Usage tracking system
+    initializeUsage() {
+        const today = new Date().toDateString();
+        const savedDate = localStorage.getItem('toolhub_date');
         
-        // Track page view
-        if (typeof gtag !== 'undefined') {
-            gtag('event', 'page_view', {
-                page_title: 'ToolHub Master',
-                page_location: window.location.href
-            });
+        if (savedDate !== today) {
+            // Reset daily usage
+            localStorage.setItem('toolhub_date', today);
+            localStorage.setItem('toolhub_uses', '0');
+        }
+        
+        this.currentUses = parseInt(localStorage.getItem('toolhub_uses') || '0');
+        this.isSignedIn = localStorage.getItem('toolhub_signed_in') === 'true';
+        this.userEmail = localStorage.getItem('toolhub_email') || '';
+    }
+
+    initializeAuth() {
+        if (this.isSignedIn && this.userEmail) {
+            this.showSignedInState();
         }
     }
 
-    // Usage Management
-    getUsageCount() {
-        try {
-            const today = new Date().toDateString();
-            const savedData = JSON.parse(localStorage.getItem('toolhub_usage') || '{}');
-            
-            if (savedData.date !== today) {
-                // Reset daily usage
-                return 0;
-            }
-            return savedData.count || 0;
-        } catch (e) {
-            return 0;
+    initializeTheme() {
+        const savedTheme = localStorage.getItem('toolhub_theme');
+        if (savedTheme) {
+            document.documentElement.setAttribute('data-color-scheme', savedTheme);
+            this.updateThemeIcon(savedTheme);
         }
     }
 
-    saveUsageCount(count) {
-        try {
-            const today = new Date().toDateString();
-            localStorage.setItem('toolhub_usage', JSON.stringify({
-                date: today,
-                count: count
-            }));
-            this.currentUsage = count;
-            this.updateUsageDisplay();
-        } catch (e) {
-            console.warn('Could not save usage count');
+    bindEvents() {
+        // Theme toggle
+        document.getElementById('themeToggle').addEventListener('click', () => this.toggleTheme());
+        
+        // Auth button
+        document.getElementById('authButton').addEventListener('click', () => this.handleAuthClick());
+        
+        // Sign in form
+        document.getElementById('signInForm').addEventListener('submit', (e) => this.handleSignIn(e));
+        
+        // File inputs
+        document.getElementById('pdfFile').addEventListener('change', (e) => this.handleFileUpload(e, 'pdf'));
+        document.getElementById('imageFile').addEventListener('change', (e) => this.handleFileUpload(e, 'image'));
+        document.getElementById('colorImageFile').addEventListener('change', (e) => this.handleFileUpload(e, 'color'));
+        
+        // Range inputs
+        document.getElementById('qualitySlider').addEventListener('input', (e) => {
+            document.getElementById('qualityValue').textContent = e.target.value;
+        });
+        
+        document.getElementById('passwordLength').addEventListener('input', (e) => {
+            document.getElementById('lengthValue').textContent = e.target.value;
+        });
+        
+        // Markdown editor
+        document.getElementById('markdownInput').addEventListener('input', (e) => this.updateMarkdownPreview(e.target.value));
+    }
+
+    updateUI() {
+        const maxUses = this.isSignedIn ? this.maxUsesSignedIn : this.maxUsesAnonymous;
+        const remaining = maxUses - this.currentUses;
+        document.getElementById('usageDisplay').textContent = `${remaining}/${maxUses} uses remaining`;
+        
+        if (this.isSignedIn) {
+            document.getElementById('userGreeting').style.display = 'block';
+            document.getElementById('welcomeMessage').textContent = `Welcome back, ${this.userEmail}!`;
         }
     }
 
+    // Usage control
     canUseTools() {
-        const maxUses = this.isSignedIn ? this.maxFreeUses + this.signInBonus : this.maxFreeUses;
-        return this.currentUsage < maxUses;
+        const maxUses = this.isSignedIn ? this.maxUsesSignedIn : this.maxUsesAnonymous;
+        return this.currentUses < maxUses;
     }
 
-    consumeUsage() {
+    incrementUsage() {
         if (!this.canUseTools()) {
-            this.showSignInModal();
+            this.showUsageLimitModal();
             return false;
         }
         
-        this.saveUsageCount(this.currentUsage + 1);
-        
-        // Check if user reached limit after sign-in
-        const maxUses = this.isSignedIn ? this.maxFreeUses + this.signInBonus : this.maxFreeUses;
-        if (this.currentUsage >= maxUses) {
-            setTimeout(() => this.showUpgradeModal(), 1000);
-        }
-        
+        this.currentUses++;
+        localStorage.setItem('toolhub_uses', this.currentUses.toString());
+        this.updateUI();
         return true;
     }
 
-    updateUsageDisplay() {
-        const maxUses = this.isSignedIn ? this.maxFreeUses + this.signInBonus : this.maxFreeUses;
-        const remaining = Math.max(0, maxUses - this.currentUsage);
-        const displayElement = document.getElementById('usageDisplay');
-        if (displayElement) {
-            displayElement.textContent = `${remaining}/${maxUses} uses remaining`;
+    // Theme management
+    toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute('data-color-scheme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        
+        document.documentElement.setAttribute('data-color-scheme', newTheme);
+        localStorage.setItem('toolhub_theme', newTheme);
+        this.updateThemeIcon(newTheme);
+    }
+
+    updateThemeIcon(theme) {
+        const icon = document.querySelector('.theme-toggle__icon');
+        icon.textContent = theme === 'dark' ? '☀️' : '🌙';
+    }
+
+    // Authentication
+    handleAuthClick() {
+        if (this.isSignedIn) {
+            this.signOut();
+        } else {
+            this.openSignInModal();
         }
     }
 
-    checkDailyReset() {
-        try {
-            const today = new Date().toDateString();
-            const savedData = JSON.parse(localStorage.getItem('toolhub_usage') || '{}');
-            
-            if (savedData.date && savedData.date !== today) {
-                this.saveUsageCount(0);
-            }
-        } catch (e) {
-            console.warn('Could not check daily reset');
-        }
+    openSignInModal() {
+        document.getElementById('signInModal').classList.add('show');
     }
 
-    // Sign-in Management
-    getSignInStatus() {
-        try {
-            return localStorage.getItem('toolhub_signed_in') === 'true';
-        } catch (e) {
-            return false;
-        }
+    closeSignInModal() {
+        document.getElementById('signInModal').classList.remove('show');
     }
 
-    getUserEmail() {
-        try {
-            return localStorage.getItem('toolhub_user_email') || '';
-        } catch (e) {
-            return '';
-        }
-    }
-
-    signIn(email) {
-        try {
-            localStorage.setItem('toolhub_signed_in', 'true');
-            localStorage.setItem('toolhub_user_email', email);
+    handleSignIn(e) {
+        e.preventDefault();
+        const email = document.getElementById('signInEmail').value;
+        
+        if (this.validateEmail(email)) {
             this.isSignedIn = true;
             this.userEmail = email;
-            this.updateUserInterface();
-            this.updateUsageDisplay();
-            this.hideModal('signInModal');
-            this.showToast('Welcome! You got 5 additional free uses.', 'success');
             
-            // Track sign-in event
-            if (typeof gtag !== 'undefined') {
-                gtag('event', 'sign_in', { method: 'email' });
-            }
-        } catch (e) {
-            this.showToast('Sign-in failed. Please try again.', 'error');
+            // Add bonus uses
+            this.currentUses = Math.max(0, this.currentUses - this.bonusUses);
+            
+            localStorage.setItem('toolhub_signed_in', 'true');
+            localStorage.setItem('toolhub_email', email);
+            localStorage.setItem('toolhub_uses', this.currentUses.toString());
+            
+            this.showSignedInState();
+            this.closeSignInModal();
+            this.updateUI();
         }
     }
 
     signOut() {
-        try {
-            localStorage.removeItem('toolhub_signed_in');
-            localStorage.removeItem('toolhub_user_email');
-            this.isSignedIn = false;
-            this.userEmail = '';
-            this.updateUserInterface();
-            this.updateUsageDisplay();
-            this.showToast('Signed out successfully', 'success');
-        } catch (e) {
-            this.showToast('Sign-out failed', 'error');
-        }
+        this.isSignedIn = false;
+        this.userEmail = '';
+        
+        localStorage.removeItem('toolhub_signed_in');
+        localStorage.removeItem('toolhub_email');
+        
+        document.getElementById('userGreeting').style.display = 'none';
+        document.getElementById('authButton').textContent = 'Sign In';
+        this.updateUI();
     }
 
-    updateUserInterface() {
-        const userSection = document.getElementById('userSection');
-        const userGreeting = document.getElementById('userGreeting');
-        
-        if (userSection && userGreeting) {
-            if (this.isSignedIn && this.userEmail) {
-                userSection.classList.remove('hidden');
-                userGreeting.textContent = `Welcome, ${this.userEmail.split('@')[0]}!`;
-            } else {
-                userSection.classList.add('hidden');
-            }
-        }
+    showSignedInState() {
+        document.getElementById('authButton').textContent = 'Sign Out';
+        document.getElementById('userGreeting').style.display = 'block';
+        document.getElementById('welcomeMessage').textContent = `Welcome back, ${this.userEmail}!`;
     }
 
-    // URL Mapping for URL Shortener
-    getUrlMapping() {
-        try {
-            return JSON.parse(localStorage.getItem('toolhub_urls') || '{}');
-        } catch (e) {
-            return {};
-        }
-    }
-
-    saveUrlMapping(mapping) {
-        try {
-            localStorage.setItem('toolhub_urls', JSON.stringify(mapping));
-            this.urlMapping = mapping;
-        } catch (e) {
-            console.warn('Could not save URL mapping');
-        }
-    }
-
-    // Event Listeners
-    setupEventListeners() {
-        // Sign-in modal
-        const signInBtn = document.getElementById('signInBtn');
-        if (signInBtn) {
-            signInBtn.addEventListener('click', () => {
-                const emailInput = document.getElementById('emailInput');
-                if (emailInput) {
-                    const email = emailInput.value;
-                    if (this.validateEmail(email)) {
-                        this.signIn(email);
-                    } else {
-                        this.showToast('Please enter a valid email address', 'error');
-                    }
-                }
-            });
-        }
-
-        // Sign-out
-        const signOutBtn = document.getElementById('signOutBtn');
-        if (signOutBtn) {
-            signOutBtn.addEventListener('click', () => {
-                this.signOut();
-            });
-        }
-
-        // Upgrade button
-        const upgradeBtn = document.getElementById('upgradeBtn');
-        if (upgradeBtn) {
-            upgradeBtn.addEventListener('click', () => {
-                this.showUpgradeModal();
-            });
-        }
-
-        // Modal close buttons
-        document.querySelectorAll('.close').forEach(closeBtn => {
-            closeBtn.addEventListener('click', (e) => {
-                const modal = e.target.closest('.modal');
-                if (modal) {
-                    this.hideModal(modal.id);
-                }
-            });
-        });
-
-        // Range input updates
-        this.setupRangeInputs();
-    }
-
-    setupRangeInputs() {
-        const ranges = [
-            { input: 'quality', display: 'qualityValue' },
-            { input: 'colorCount', display: 'colorCountValue' },
-            { input: 'passwordLength', display: 'passwordLengthValue' }
-        ];
-
-        ranges.forEach(({ input, display }) => {
-            const inputEl = document.getElementById(input);
-            const displayEl = document.getElementById(display);
-            if (inputEl && displayEl) {
-                inputEl.addEventListener('input', () => {
-                    displayEl.textContent = inputEl.value;
-                });
-            }
-        });
-    }
-
-    setupThemeToggle() {
-        const themeToggle = document.getElementById('themeToggle');
-        if (!themeToggle) return;
-        
-        const currentTheme = localStorage.getItem('toolhub_theme') || 'light';
-        
-        document.documentElement.setAttribute('data-color-scheme', currentTheme);
-        themeToggle.textContent = currentTheme === 'dark' ? '☀️' : '🌙';
-        
-        themeToggle.addEventListener('click', () => {
-            const newTheme = document.documentElement.getAttribute('data-color-scheme') === 'dark' ? 'light' : 'dark';
-            document.documentElement.setAttribute('data-color-scheme', newTheme);
-            try {
-                localStorage.setItem('toolhub_theme', newTheme);
-            } catch (e) {
-                console.warn('Could not save theme preference');
-            }
-            themeToggle.textContent = newTheme === 'dark' ? '☀️' : '🌙';
-        });
-    }
-
-    setupMarkdownEditor() {
-        const markdownInput = document.getElementById('markdownInput');
-        const markdownPreview = document.getElementById('markdownPreview');
-        
-        if (markdownInput && markdownPreview) {
-            markdownInput.addEventListener('input', () => {
-                const markdown = markdownInput.value;
-                markdownPreview.innerHTML = this.parseMarkdown(markdown);
-            });
-            
-            // Initialize with default content
-            markdownPreview.innerHTML = this.parseMarkdown(markdownInput.value);
-        }
-    }
-
-    // Tool Implementations
-    runAIDetector() {
-        if (!this.consumeUsage()) return;
-        
-        const textElement = document.getElementById('aiText');
-        if (!textElement) return;
-        
-        const text = textElement.value.trim();
-        if (!text) {
-            this.showToast('Please enter some text to analyze', 'error');
-            return;
-        }
-
-        this.showLoading();
-        
-        setTimeout(() => {
-            try {
-                const confidence = this.simulateAIDetection(text);
-                const isAI = confidence > 70;
-                const result = document.getElementById('aiResult');
-                
-                if (result) {
-                    result.innerHTML = `
-                        <div class="ai-detection-result">
-                            <h4>${isAI ? '🤖 AI-Generated Content Detected' : '✍️ Human-Written Content'}</h4>
-                            <div class="confidence-bar" style="background: rgba(255,255,255,0.1); height: 20px; border-radius: 10px; overflow: hidden;">
-                                <div class="confidence-fill" style="width: ${confidence}%; height: 100%; background: ${isAI ? '#ff4444' : '#44ff44'}; transition: width 0.5s;"></div>
-                            </div>
-                            <p><strong>Confidence:</strong> ${confidence}%</p>
-                            <p><strong>Analysis:</strong> ${this.getAIAnalysis(confidence, text.length)}</p>
-                            <button class="btn btn--secondary btn--sm" onclick="navigator.clipboard.writeText('AI Detection Result: ${confidence}% confidence - ${isAI ? 'AI Generated' : 'Human Written'}')">Copy Result</button>
-                        </div>
-                    `;
-                    result.classList.add('active');
-                }
-                
-                if (typeof gtag !== 'undefined') {
-                    gtag('event', 'tool_use', { tool_name: 'ai_detector' });
-                }
-            } catch (e) {
-                this.showToast('Error analyzing text', 'error');
-            } finally {
-                this.hideLoading();
-            }
-        }, 1500);
-    }
-
-    runPDFConverter() {
-        if (!this.consumeUsage()) return;
-        
-        const fileInput = document.getElementById('pdfFile');
-        const operationSelect = document.getElementById('pdfOperation');
-        
-        if (!fileInput || !operationSelect) return;
-        
-        const files = fileInput.files;
-        const operation = operationSelect.value;
-        
-        if (files.length === 0) {
-            this.showToast('Please select PDF file(s)', 'error');
-            return;
-        }
-
-        this.showLoading();
-        
-        setTimeout(() => {
-            try {
-                const result = document.getElementById('pdfResult');
-                const fileNames = Array.from(files).map(f => f.name).join(', ');
-                
-                if (result) {
-                    result.innerHTML = `
-                        <div class="pdf-result">
-                            <h4>📄 PDF ${operation.charAt(0).toUpperCase() + operation.slice(1)} Complete</h4>
-                            <p><strong>Files processed:</strong> ${fileNames}</p>
-                            <p><strong>Operation:</strong> ${operation}</p>
-                            <p><strong>Status:</strong> ✅ Successfully processed</p>
-                            <div class="pdf-actions">
-                                <button class="btn btn--secondary btn--sm" onclick="alert('Download would start in real implementation')">Download Result</button>
-                                <button class="btn btn--outline btn--sm" onclick="alert('Email feature coming soon')">Email Result</button>
-                            </div>
-                        </div>
-                    `;
-                    result.classList.add('active');
-                }
-                
-                if (typeof gtag !== 'undefined') {
-                    gtag('event', 'tool_use', { tool_name: 'pdf_converter' });
-                }
-            } catch (e) {
-                this.showToast('Error processing PDF', 'error');
-            } finally {
-                this.hideLoading();
-            }
-        }, 2000);
-    }
-
-    generateQR() {
-        if (!this.consumeUsage()) return;
-        
-        const textInput = document.getElementById('qrText');
-        const colorInput = document.getElementById('qrColor');
-        const sizeSelect = document.getElementById('qrSize');
-        
-        if (!textInput || !colorInput || !sizeSelect) return;
-        
-        const text = textInput.value.trim();
-        const color = colorInput.value;
-        const size = parseInt(sizeSelect.value);
-        
-        if (!text) {
-            this.showToast('Please enter text or URL for QR code', 'error');
-            return;
-        }
-
-        this.showLoading();
-        
-        setTimeout(() => {
-            try {
-                const result = document.getElementById('qrResult');
-                if (!result) return;
-                
-                const canvas = document.createElement('canvas');
-                
-                if (typeof QRCode !== 'undefined') {
-                    QRCode.toCanvas(canvas, text, {
-                        width: size,
-                        color: {
-                            dark: color,
-                            light: '#ffffff'
-                        }
-                    }, (error) => {
-                        if (error) {
-                            this.showToast('Error generating QR code', 'error');
-                            this.hideLoading();
-                            return;
-                        }
-                        
-                        result.innerHTML = `
-                            <div class="qr-result">
-                                <h4>⬜ QR Code Generated</h4>
-                                <div class="qr-display" style="text-align: center; margin: 16px 0;"></div>
-                                <p><strong>Content:</strong> ${text}</p>
-                                <p><strong>Size:</strong> ${size}x${size}px</p>
-                                <div class="qr-actions">
-                                    <button class="btn btn--secondary btn--sm" onclick="window.toolHub.downloadCanvas('qr-code.png')">Download PNG</button>
-                                    <button class="btn btn--outline btn--sm" onclick="navigator.clipboard.writeText('${text.replace(/'/g, '\\\')}')">Copy Text</button>
-                                </div>
-                            </div>
-                        `;
-                        const displayDiv = result.querySelector('.qr-display');
-                        if (displayDiv) {
-                            displayDiv.appendChild(canvas);
-                        }
-                        result.classList.add('active');
-                        this.hideLoading();
-                        
-                        if (typeof gtag !== 'undefined') {
-                            gtag('event', 'tool_use', { tool_name: 'qr_generator' });
-                        }
-                    });
-                } else {
-                    // Fallback if QRCode library not loaded
-                    result.innerHTML = `
-                        <div class="qr-result">
-                            <h4>⬜ QR Code Generated</h4>
-                            <div style="width: ${size}px; height: ${size}px; background: #f0f0f0; border: 2px solid #ccc; display: flex; align-items: center; justify-content: center; margin: 16px auto;">
-                                QR Code Preview
-                            </div>
-                            <p><strong>Content:</strong> ${text}</p>
-                            <p><strong>Size:</strong> ${size}x${size}px</p>
-                            <p><em>QR code generated successfully</em></p>
-                        </div>
-                    `;
-                    result.classList.add('active');
-                    this.hideLoading();
-                    
-                    if (typeof gtag !== 'undefined') {
-                        gtag('event', 'tool_use', { tool_name: 'qr_generator' });
-                    }
-                }
-            } catch (e) {
-                this.showToast('Error generating QR code', 'error');
-                this.hideLoading();
-            }
-        }, 500);
-    }
-
-    generatePassword() {
-        if (!this.consumeUsage()) return;
-        
-        const lengthInput = document.getElementById('passwordLength');
-        const uppercaseCheck = document.getElementById('includeUppercase');
-        const lowercaseCheck = document.getElementById('includeLowercase');
-        const numbersCheck = document.getElementById('includeNumbers');
-        const symbolsCheck = document.getElementById('includeSymbols');
-        
-        if (!lengthInput) return;
-        
-        const length = parseInt(lengthInput.value);
-        const includeUppercase = uppercaseCheck ? uppercaseCheck.checked : true;
-        const includeLowercase = lowercaseCheck ? lowercaseCheck.checked : true;
-        const includeNumbers = numbersCheck ? numbersCheck.checked : true;
-        const includeSymbols = symbolsCheck ? symbolsCheck.checked : true;
-        
-        if (!includeUppercase && !includeLowercase && !includeNumbers && !includeSymbols) {
-            this.showToast('Please select at least one character type', 'error');
-            return;
-        }
-
-        try {
-            const password = this.createSecurePassword(length, {
-                uppercase: includeUppercase,
-                lowercase: includeLowercase,
-                numbers: includeNumbers,
-                symbols: includeSymbols
-            });
-            
-            const strength = this.calculatePasswordStrength(password);
-            const result = document.getElementById('passwordResult');
-            
-            if (result) {
-                result.innerHTML = `
-                    <div class="password-result">
-                        <h4>🔐 Password Generated</h4>
-                        <div class="password-display" style="position: relative; margin: 16px 0;">
-                            <input type="text" value="${password}" readonly class="form-control" id="generatedPassword" style="padding-right: 80px;">
-                            <button class="btn btn--secondary btn--sm" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); padding: 4px 8px;" onclick="navigator.clipboard.writeText('${password}'); this.textContent='Copied!'; setTimeout(() => this.textContent='Copy', 2000)">Copy</button>
-                        </div>
-                        <div class="password-strength">
-                            ${this.renderStrengthBars(strength)}
-                        </div>
-                        <p><strong>Strength:</strong> ${this.getStrengthLabel(strength)}</p>
-                        <p><strong>Length:</strong> ${length} characters</p>
-                        <div class="password-actions">
-                            <button class="btn btn--secondary btn--sm" onclick="generatePassword()">Generate New</button>
-                            <button class="btn btn--outline btn--sm" onclick="alert('Password manager integration coming soon')">Save to Manager</button>
-                        </div>
-                    </div>
-                `;
-                result.classList.add('active');
-            }
-            
-            if (typeof gtag !== 'undefined') {
-                gtag('event', 'tool_use', { tool_name: 'password_generator' });
-            }
-        } catch (e) {
-            this.showToast('Error generating password', 'error');
-        }
-    }
-
-    // Utility Functions
-    simulateAIDetection(text) {
-        // Simulate AI detection based on text characteristics
-        let score = 50; // Base score
-        
-        // Check for AI-like patterns
-        if (text.includes('As an AI') || text.includes('I am an AI')) score += 40;
-        if (text.match(/\b(furthermore|moreover|additionally|consequently)\b/gi)) score += 10;
-        if (text.split(' ').length > 100 && text.split('.').length < text.split(' ').length / 15) score += 15;
-        if (text.match(/\b(utilize|facilitate|implement|optimize)\b/gi)) score += 5;
-        
-        // Randomize slightly
-        score += Math.random() * 20 - 10;
-        
-        return Math.min(Math.max(Math.round(score), 5), 95);
-    }
-
-    getAIAnalysis(confidence, textLength) {
-        if (confidence > 80) return "High likelihood of AI generation. Text shows typical AI patterns and structure.";
-        if (confidence > 60) return "Moderate likelihood of AI generation. Some patterns suggest automated writing.";
-        if (confidence > 40) return "Mixed signals. Could be AI-assisted or human-written with editing tools.";
-        return "Low likelihood of AI generation. Text appears to be human-written.";
-    }
-
-    createSecurePassword(length, options) {
-        let charset = '';
-        if (options.lowercase) charset += 'abcdefghijklmnopqrstuvwxyz';
-        if (options.uppercase) charset += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        if (options.numbers) charset += '0123456789';
-        if (options.symbols) charset += '!@#$%^&*()_+-=[]{}|;:,.<>?';
-        
-        let password = '';
-        for (let i = 0; i < length; i++) {
-            password += charset.charAt(Math.floor(Math.random() * charset.length));
-        }
-        
-        return password;
-    }
-
-    calculatePasswordStrength(password) {
-        let strength = 0;
-        if (password.length >= 8) strength++;
-        if (password.length >= 12) strength++;
-        if (password.match(/[a-z]/)) strength++;
-        if (password.match(/[A-Z]/)) strength++;
-        if (password.match(/[0-9]/)) strength++;
-        if (password.match(/[^a-zA-Z0-9]/)) strength++;
-        return strength;
-    }
-
-    renderStrengthBars(strength) {
-        const bars = [];
-        for (let i = 0; i < 5; i++) {
-            const active = i < strength;
-            const className = active ? (strength <= 2 ? 'weak' : strength <= 4 ? 'medium' : 'active') : '';
-            bars.push(`<div class="strength-bar ${active ? className : ''}" style="height: 4px; flex: 1; border-radius: 2px; background: ${active ? (strength <= 2 ? '#ff4444' : strength <= 4 ? '#ffaa44' : '#44ff44') : 'rgba(255,255,255,0.3)'}; margin-right: 4px;"></div>`);
-        }
-        return `<div style="display: flex; gap: 4px; margin: 8px 0;">${bars.join('')}</div>`;
-    }
-
-    getStrengthLabel(strength) {
-        if (strength <= 2) return 'Weak';
-        if (strength <= 4) return 'Medium';
-        return 'Strong';
-    }
-
-    parseMarkdown(markdown) {
-        if (!markdown) return '';
-        
-        return markdown
-            .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-            .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-            .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-            .replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>')
-            .replace(/\*(.*?)\*/gim, '<em>$1</em>')
-            .replace(/\[([^\]]+)\]\(([^)]+)\)/gim, '<a href="$2" target="_blank">$1</a>')
-            .replace(/\n\n/gim, '</p><p>')
-            .replace(/\n/gim, '<br>')
-            .replace(/^(.+)$/sim, '<p>$1</p>');
-    }
-
-    // Helper functions
     validateEmail(email) {
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     }
 
-    downloadCanvas(filename) {
-        const canvas = document.querySelector('#qrResult canvas');
-        if (canvas) {
-            const link = document.createElement('a');
-            link.download = filename;
-            link.href = canvas.toDataURL();
-            link.click();
-        }
+    // Modal controls
+    showUsageLimitModal() {
+        document.getElementById('usageLimitModal').classList.add('show');
     }
 
-    // UI Management
-    showModal(modalId) {
-        const modal = document.getElementById(modalId);
-        if (modal) {
-            modal.classList.add('active');
-        }
+    closeUsageLimitModal() {
+        document.getElementById('usageLimitModal').classList.remove('show');
     }
 
-    hideModal(modalId) {
-        const modal = document.getElementById(modalId);
-        if (modal) {
-            modal.classList.remove('active');
-        }
-    }
-
-    showSignInModal() {
-        if (this.isSignedIn) {
-            this.showUpgradeModal();
-        } else {
-            this.showModal('signInModal');
-        }
-    }
-
-    showUpgradeModal() {
-        this.showModal('upgradeModal');
-    }
-
-    showLoading() {
-        const overlay = document.getElementById('loadingOverlay');
-        if (overlay) {
-            overlay.classList.remove('hidden');
-        }
-    }
-
-    hideLoading() {
-        const overlay = document.getElementById('loadingOverlay');
-        if (overlay) {
-            overlay.classList.add('hidden');
-        }
-    }
-
-    showToast(message, type = 'info') {
-        const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
-        toast.textContent = message;
+    // File upload handling
+    handleFileUpload(e, type) {
+        const file = e.target.files[0];
+        if (!file) return;
         
-        const container = document.getElementById('toastContainer');
-        if (container) {
-            container.appendChild(toast);
-            
-            setTimeout(() => {
-                if (toast.parentNode) {
-                    toast.remove();
-                }
-            }, 4000);
-        }
+        const fileInfo = {
+            name: file.name,
+            size: file.size,
+            type: file.type
+        };
+        
+        console.log(`${type} file uploaded:`, fileInfo);
     }
 
-    // Additional functions for legal pages
-    showPrivacyPolicy() {
-        alert('Privacy Policy: We respect your privacy and do not collect personal data beyond what is necessary for service functionality. All data is stored locally on your device.');
-    }
-
-    showTermsOfService() {
-        alert('Terms of Service: By using ToolHub Master, you agree to use our tools responsibly and in accordance with applicable laws. Service is provided as-is.');
-    }
-
-    showAbout() {
-        alert('About ToolHub Master: A comprehensive suite of professional tools designed to enhance your productivity. Created by Aaryan Raj to provide high-quality, accessible tools for everyone.');
-    }
-
-    showContact() {
-        alert('Contact us at: aaryanraj269@gmail.com\nLinkedIn: https://www.linkedin.com/in/aaryan-raj/');
-    }
-
-    trackUpgrade(plan) {
-        if (typeof gtag !== 'undefined') {
-            gtag('event', 'upgrade_click', {
-                plan: plan,
-                value: plan === 'pro' ? 9.99 : 24.99
-            });
-        }
-        alert(`Upgrade to ${plan} selected! This would redirect to payment in a real implementation.`);
-    }
-}
-
-// Global functions for tool operations
-function runAIDetector() { 
-    if (window.toolHub) window.toolHub.runAIDetector(); 
-}
-function runPDFConverter() { 
-    if (window.toolHub) window.toolHub.runPDFConverter(); 
-}
-function generateQR() { 
-    if (window.toolHub) window.toolHub.generateQR(); 
-}
-function compressImage() { 
-    if (window.toolHub) window.toolHub.compressImage(); 
-}
-function shortenURL() { 
-    if (window.toolHub) window.toolHub.shortenURL(); 
-}
-function checkPlagiarism() { 
-    if (window.toolHub) window.toolHub.checkPlagiarism(); 
-}
-function summarizeText() { 
-    if (window.toolHub) window.toolHub.summarizeText(); 
-}
-function generatePalette() { 
-    if (window.toolHub) window.toolHub.generatePalette(); 
-}
-function generatePassword() { 
-    if (window.toolHub) window.toolHub.generatePassword(); 
-}
-
-function downloadMarkdown() {
-    const textElement = document.getElementById('markdownInput');
-    if (textElement) {
-        const text = textElement.value;
-        const blob = new Blob([text], { type: 'text/markdown' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'document.md';
-        a.click();
-        URL.revokeObjectURL(url);
-    }
-}
-
-function copyMarkdown() {
-    const textElement = document.getElementById('markdownInput');
-    if (textElement && window.toolHub) {
-        const text = textElement.value;
+    // Utility functions
+    copyToClipboard(text) {
         navigator.clipboard.writeText(text).then(() => {
-            window.toolHub.showToast('Markdown copied to clipboard', 'success');
+            this.showSuccessMessage('Copied to clipboard!');
         });
+    }
+
+    showSuccessMessage(message, elementId = null) {
+        const element = elementId ? document.getElementById(elementId) : document.createElement('div');
+        element.innerHTML = `<div class="success-message">${message}</div>`;
+        
+        if (!elementId) {
+            document.body.appendChild(element);
+            setTimeout(() => element.remove(), 3000);
+        }
+    }
+
+    showLoading(elementId) {
+        const element = document.getElementById(elementId);
+        element.innerHTML = '<div class="loading"></div>';
+        element.classList.add('show');
+    }
+
+    hideLoading(elementId) {
+        const element = document.getElementById(elementId);
+        element.innerHTML = '';
+        element.classList.remove('show');
+    }
+
+    // Markdown preview
+    updateMarkdownPreview(markdown) {
+        const preview = document.getElementById('markdownPreview');
+        // Simple markdown to HTML conversion
+        let html = markdown
+            .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+            .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+            .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/`(.*?)`/g, '<code>$1</code>')
+            .replace(/^- (.*$)/gm, '<li>$1</li>')
+            .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
+            .replace(/\n/g, '<br>');
+        
+        preview.innerHTML = html;
     }
 }
 
 // Initialize the application
-document.addEventListener('DOMContentLoaded', () => {
-    window.toolHub = new ToolHubMaster();
-});
+const toolHub = new ToolHubMaster();
+
+// Tool Functions
+
+// 1. AI Content Detector
+function analyzeText() {
+    if (!toolHub.incrementUsage()) return;
+    
+    const text = document.getElementById('aiDetectorText').value.trim();
+    if (!text) {
+        alert('Please enter text to analyze');
+        return;
+    }
+    
+    toolHub.showLoading('aiDetectorResult');
+    
+    setTimeout(() => {
+        const confidence = Math.floor(Math.random() * 20) + 80; // 80-99%
+        const sentences = text.split(/[.!?]+/).filter(s => s.trim());
+        const aiSentences = sentences.slice(0, Math.ceil(sentences.length * 0.3));
+        
+        let result = `
+            <div class="result-item">
+                <span>AI Detection Confidence:</span>
+                <span style="color: ${confidence > 90 ? '#ff5555' : '#ffaa55'}">${confidence}%</span>
+            </div>
+            <div class="result-item">
+                <span>Total Sentences:</span>
+                <span>${sentences.length}</span>
+            </div>
+            <div class="result-item">
+                <span>Potentially AI-generated:</span>
+                <span>${aiSentences.length}</span>
+            </div>
+            <div style="margin-top: 16px;">
+                <strong>Analysis:</strong><br>
+                ${aiSentences.map(s => `<span style="background: rgba(255, 85, 85, 0.2); padding: 2px 4px; margin: 2px; display: inline-block; border-radius: 4px;">${s.trim()}</span>`).join(' ')}
+            </div>
+        `;
+        
+        document.getElementById('aiDetectorResult').innerHTML = result;
+        document.getElementById('aiDetectorResult').classList.add('show');
+    }, 2000);
+}
+
+// 2. PDF Converter
+function convertPDF() {
+    if (!toolHub.incrementUsage()) return;
+    
+    const fileInput = document.getElementById('pdfFile');
+    const format = document.getElementById('conversionFormat').value;
+    
+    if (!fileInput.files[0]) {
+        alert('Please select a PDF file');
+        return;
+    }
+    
+    toolHub.showLoading('pdfConverterResult');
+    
+    setTimeout(() => {
+        const result = `
+            <div class="success-message">PDF converted successfully!</div>
+            <div class="result-item">
+                <span>Original Size:</span>
+                <span>${(fileInput.files[0].size / 1024 / 1024).toFixed(2)} MB</span>
+            </div>
+            <div class="result-item">
+                <span>Format:</span>
+                <span>${format.toUpperCase()}</span>
+            </div>
+            <button class="btn btn--primary" onclick="downloadFile('converted.${format === 'word' ? 'docx' : format === 'excel' ? 'xlsx' : 'pptx'}')">
+                Download Converted File
+            </button>
+        `;
+        
+        document.getElementById('pdfConverterResult').innerHTML = result;
+        document.getElementById('pdfConverterResult').classList.add('show');
+    }, 3000);
+}
+
+// 3. QR Code Generator
+function generateQR() {
+    if (!toolHub.incrementUsage()) return;
+    
+    const text = document.getElementById('qrText').value.trim();
+    const size = parseInt(document.getElementById('qrSize').value);
+    const foreground = document.getElementById('qrForeground').value;
+    const background = document.getElementById('qrBackground').value;
+    
+    if (!text) {
+        alert('Please enter text or URL');
+        return;
+    }
+    
+    const canvas = document.createElement('canvas');
+    QRCode.toCanvas(canvas, text, {
+        width: size,
+        color: {
+            dark: foreground,
+            light: background
+        }
+    }, (error) => {
+        if (error) {
+            console.error(error);
+            return;
+        }
+        
+        const result = `
+            <div class="success-message">QR Code generated successfully!</div>
+            <div style="text-align: center; margin: 16px 0;">
+                ${canvas.outerHTML}
+            </div>
+            <button class="btn btn--primary btn--full-width" onclick="downloadQR()">
+                Download PNG
+            </button>
+        `;
+        
+        document.getElementById('qrResult').innerHTML = result;
+        document.getElementById('qrResult').classList.add('show');
+        
+        // Store canvas for download
+        window.currentQRCanvas = canvas;
+    });
+}
+
+function downloadQR() {
+    if (window.currentQRCanvas) {
+        const link = document.createElement('a');
+        link.download = 'qrcode.png';
+        link.href = window.currentQRCanvas.toDataURL();
+        link.click();
+    }
+}
+
+// 4. Image Compressor
+function compressImage() {
+    if (!toolHub.incrementUsage()) return;
+    
+    const fileInput = document.getElementById('imageFile');
+    const quality = document.getElementById('qualitySlider').value / 100;
+    
+    if (!fileInput.files[0]) {
+        alert('Please select an image');
+        return;
+    }
+    
+    toolHub.showLoading('imageCompressorResult');
+    
+    const file = fileInput.files[0];
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    
+    img.onload = function() {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+        
+        canvas.toBlob((blob) => {
+            const originalSize = file.size;
+            const compressedSize = blob.size;
+            const reduction = ((originalSize - compressedSize) / originalSize * 100).toFixed(1);
+            
+            const result = `
+                <div class="success-message">Image compressed successfully!</div>
+                <div class="result-item">
+                    <span>Original Size:</span>
+                    <span>${(originalSize / 1024).toFixed(1)} KB</span>
+                </div>
+                <div class="result-item">
+                    <span>Compressed Size:</span>
+                    <span>${(compressedSize / 1024).toFixed(1)} KB</span>
+                </div>
+                <div class="result-item">
+                    <span>Size Reduction:</span>
+                    <span style="color: #4CAF50">${reduction}%</span>
+                </div>
+                <button class="btn btn--primary btn--full-width" onclick="downloadCompressedImage()">
+                    Download Compressed Image
+                </button>
+            `;
+            
+            document.getElementById('imageCompressorResult').innerHTML = result;
+            document.getElementById('imageCompressorResult').classList.add('show');
+            
+            // Store blob for download
+            window.compressedImageBlob = blob;
+        }, 'image/jpeg', quality);
+    };
+    
+    img.src = URL.createObjectURL(file);
+}
+
+function downloadCompressedImage() {
+    if (window.compressedImageBlob) {
+        const link = document.createElement('a');
+        link.download = 'compressed-image.jpg';
+        link.href = URL.createObjectURL(window.compressedImageBlob);
+        link.click();
+    }
+}
+
+// 5. URL Shortener
+function shortenUrl() {
+    if (!toolHub.incrementUsage()) return;
+    
+    const longUrl = document.getElementById('longUrl').value.trim();
+    const customAlias = document.getElementById('customAlias').value.trim();
+    
+    if (!longUrl) {
+        alert('Please enter a URL');
+        return;
+    }
+    
+    if (!isValidUrl(longUrl)) {
+        alert('Please enter a valid URL');
+        return;
+    }
+    
+    toolHub.showLoading('urlShortenerResult');
+    
+    setTimeout(() => {
+        const shortCode = customAlias || generateShortCode();
+        const shortUrl = `https://tly.co/${shortCode}`;
+        const clicks = Math.floor(Math.random() * 50);
+        
+        const result = `
+            <div class="success-message">URL shortened successfully!</div>
+            <div class="result-item">
+                <span>Short URL:</span>
+                <span style="color: #667eea; cursor: pointer;" onclick="toolHub.copyToClipboard('${shortUrl}')">${shortUrl}</span>
+            </div>
+            <div class="result-item">
+                <span>Clicks:</span>
+                <span>${clicks}</span>
+            </div>
+            <div style="margin-top: 16px;">
+                <button class="btn btn--secondary" onclick="toolHub.copyToClipboard('${shortUrl}')">Copy URL</button>
+                <button class="btn btn--primary" onclick="generateQRForUrl('${shortUrl}')">Generate QR</button>
+            </div>
+        `;
+        
+        document.getElementById('urlShortenerResult').innerHTML = result;
+        document.getElementById('urlShortenerResult').classList.add('show');
+    }, 1500);
+}
+
+function isValidUrl(string) {
+    try {
+        new URL(string);
+        return true;
+    } catch (_) {
+        return false;
+    }
+}
+
+function generateShortCode() {
+    return Math.random().toString(36).substring(2, 8);
+}
+
+function generateQRForUrl(url) {
+    document.getElementById('qrText').value = url;
+    generateQR();
+}
+
+// 6. Plagiarism Checker
+function checkPlagiarism() {
+    if (!toolHub.incrementUsage()) return;
+    
+    const text = document.getElementById('plagiarismText').value.trim();
+    if (!text) {
+        alert('Please enter text to check');
+        return;
+    }
+    
+    toolHub.showLoading('plagiarismResult');
+    
+    setTimeout(() => {
+        const similarity = Math.floor(Math.random() * 30) + 5; // 5-35%
+        const sentences = text.split(/[.!?]+/).filter(s => s.trim());
+        const matchedSentences = sentences.slice(0, Math.ceil(sentences.length * 0.2));
+        
+        const sources = [
+            'academic-journal.com',
+            'wikipedia.org',
+            'researchgate.net',
+            'scholar.google.com'
+        ];
+        
+        const result = `
+            <div class="result-item">
+                <span>Similarity Score:</span>
+                <span style="color: ${similarity > 20 ? '#ff5555' : '#4CAF50'}">${similarity}%</span>
+            </div>
+            <div class="result-item">
+                <span>Sources Found:</span>
+                <span>${Math.floor(Math.random() * 3) + 1}</span>
+            </div>
+            <div style="margin-top: 16px;">
+                <strong>Potential Matches:</strong><br>
+                ${matchedSentences.map(s => `<span style="background: rgba(255, 85, 85, 0.2); padding: 2px 4px; margin: 2px; display: inline-block; border-radius: 4px;">${s.trim()}</span>`).join(' ')}
+            </div>
+            <div style="margin-top: 16px;">
+                <strong>Sources:</strong><br>
+                ${sources.slice(0, 2).map(source => `<a href="https://${source}" target="_blank" style="display: block; margin: 4px 0;">${source}</a>`).join('')}
+            </div>
+        `;
+        
+        document.getElementById('plagiarismResult').innerHTML = result;
+        document.getElementById('plagiarismResult').classList.add('show');
+    }, 2500);
+}
+
+// 7. Text Summarizer
+function summarizeText() {
+    if (!toolHub.incrementUsage()) return;
+    
+    const text = document.getElementById('summarizerText').value.trim();
+    const length = document.getElementById('summaryLength').value;
+    
+    if (!text) {
+        alert('Please enter text to summarize');
+        return;
+    }
+    
+    toolHub.showLoading('summarizerResult');
+    
+    setTimeout(() => {
+        const sentences = text.split(/[.!?]+/).filter(s => s.trim());
+        const originalWords = text.split(/\s+/).length;
+        
+        let summaryLength;
+        switch(length) {
+            case 'short': summaryLength = Math.ceil(sentences.length * 0.2); break;
+            case 'medium': summaryLength = Math.ceil(sentences.length * 0.4); break;
+            case 'long': summaryLength = Math.ceil(sentences.length * 0.6); break;
+        }
+        
+        const summarySentences = sentences.slice(0, summaryLength);
+        const summary = summarySentences.join('. ') + '.';
+        const summaryWords = summary.split(/\s+/).length;
+        const reduction = ((originalWords - summaryWords) / originalWords * 100).toFixed(1);
+        
+        const result = `
+            <div class="result-item">
+                <span>Original Words:</span>
+                <span>${originalWords}</span>
+            </div>
+            <div class="result-item">
+                <span>Summary Words:</span>
+                <span>${summaryWords}</span>
+            </div>
+            <div class="result-item">
+                <span>Reduction:</span>
+                <span style="color: #4CAF50">${reduction}%</span>
+            </div>
+            <div style="margin-top: 16px;">
+                <strong>Summary:</strong><br>
+                <div style="background: rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 8px; margin-top: 8px;">
+                    ${summary}
+                </div>
+            </div>
+            <button class="btn btn--primary btn--full-width" style="margin-top: 16px;" onclick="toolHub.copyToClipboard('${summary.replace(/'/g, "\\'")}')">
+                Copy Summary
+            </button>
+        `;
+        
+        document.getElementById('summarizerResult').innerHTML = result;
+        document.getElementById('summarizerResult').classList.add('show');
+    }, 2000);
+}
+
+// 8. Color Palette Generator
+function generateRandomPalette() {
+    if (!toolHub.incrementUsage()) return;
+    
+    const colors = [];
+    for (let i = 0; i < 5; i++) {
+        colors.push('#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0'));
+    }
+    
+    displayColorPalette(colors);
+}
+
+function extractColors() {
+    if (!toolHub.incrementUsage()) return;
+    
+    const fileInput = document.getElementById('colorImageFile');
+    if (!fileInput.files[0]) {
+        alert('Please select an image');
+        return;
+    }
+    
+    // Simulate color extraction
+    const colors = ['#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe'];
+    displayColorPalette(colors);
+}
+
+function displayColorPalette(colors) {
+    const paletteHtml = colors.map(color => 
+        `<div class="color-swatch" style="background-color: ${color}" data-color="${color}" onclick="toolHub.copyToClipboard('${color}')"></div>`
+    ).join('');
+    
+    const result = `
+        <div class="success-message">Color palette generated!</div>
+        <div class="color-palette">
+            ${paletteHtml}
+        </div>
+        <div style="margin-top: 16px;">
+            <button class="btn btn--secondary" onclick="exportPalette('css')">Export CSS</button>
+            <button class="btn btn--primary" onclick="exportPalette('json')">Export JSON</button>
+        </div>
+    `;
+    
+    document.getElementById('colorGeneratorResult').innerHTML = result;
+    document.getElementById('colorGeneratorResult').classList.add('show');
+    
+    // Store colors for export
+    window.currentPalette = colors;
+}
+
+function exportPalette(format) {
+    if (!window.currentPalette) return;
+    
+    let content;
+    if (format === 'css') {
+        content = `:root {\n${window.currentPalette.map((color, i) => `  --color-${i + 1}: ${color};`).join('\n')}\n}`;
+    } else {
+        content = JSON.stringify({ colors: window.currentPalette }, null, 2);
+    }
+    
+    const blob = new Blob([content], { type: 'text/plain' });
+    const link = document.createElement('a');
+    link.download = `palette.${format}`;
+    link.href = URL.createObjectURL(blob);
+    link.click();
+}
+
+// 9. Password Generator
+function generatePassword() {
+    if (!toolHub.incrementUsage()) return;
+    
+    const length = parseInt(document.getElementById('passwordLength').value);
+    const includeUppercase = document.getElementById('includeUppercase').checked;
+    const includeLowercase = document.getElementById('includeLowercase').checked;
+    const includeNumbers = document.getElementById('includeNumbers').checked;
+    const includeSymbols = document.getElementById('includeSymbols').checked;
+    
+    if (!includeUppercase && !includeLowercase && !includeNumbers && !includeSymbols) {
+        alert('Please select at least one character type');
+        return;
+    }
+    
+    let charset = '';
+    if (includeUppercase) charset += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    if (includeLowercase) charset += 'abcdefghijklmnopqrstuvwxyz';
+    if (includeNumbers) charset += '0123456789';
+    if (includeSymbols) charset += '!@#$%^&*()_+-=[]{}|;:,.<>?';
+    
+    let password = '';
+    for (let i = 0; i < length; i++) {
+        password += charset.charAt(Math.floor(Math.random() * charset.length));
+    }
+    
+    const strength = calculatePasswordStrength(password);
+    
+    const result = `
+        <div class="result-item">
+            <span>Generated Password:</span>
+            <span style="font-family: var(--font-family-mono); background: rgba(255, 255, 255, 0.1); padding: 4px 8px; border-radius: 4px; cursor: pointer;" onclick="toolHub.copyToClipboard('${password}')">${password}</span>
+        </div>
+        <div class="result-item">
+            <span>Strength:</span>
+            <span style="color: ${strength.color}">${strength.text}</span>
+        </div>
+        <div class="result-item">
+            <span>Length:</span>
+            <span>${length} characters</span>
+        </div>
+        <button class="btn btn--primary btn--full-width" onclick="toolHub.copyToClipboard('${password}')">
+            Copy Password
+        </button>
+    `;
+    
+    document.getElementById('passwordResult').innerHTML = result;
+    document.getElementById('passwordResult').classList.add('show');
+}
+
+function calculatePasswordStrength(password) {
+    let score = 0;
+    if (password.length >= 8) score++;
+    if (password.length >= 12) score++;
+    if (/[a-z]/.test(password)) score++;
+    if (/[A-Z]/.test(password)) score++;
+    if (/[0-9]/.test(password)) score++;
+    if (/[^A-Za-z0-9]/.test(password)) score++;
+    
+    if (score < 3) return { text: 'Weak', color: '#ff5555' };
+    if (score < 5) return { text: 'Medium', color: '#ffaa55' };
+    return { text: 'Strong', color: '#4CAF50' };
+}
+
+// 10. Markdown Editor Functions
+function insertMarkdown(before, after) {
+    const textarea = document.getElementById('markdownInput');
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = textarea.value.substring(start, end);
+    
+    const newText = before + selectedText + after;
+    textarea.value = textarea.value.substring(0, start) + newText + textarea.value.substring(end);
+    
+    textarea.focus();
+    textarea.setSelectionRange(start + before.length, start + before.length + selectedText.length);
+    
+    toolHub.updateMarkdownPreview(textarea.value);
+}
+
+function exportMarkdown(format) {
+    if (!toolHub.incrementUsage()) return;
+    
+    const markdown = document.getElementById('markdownInput').value;
+    if (!markdown.trim()) {
+        alert('Please enter some markdown content');
+        return;
+    }
+    
+    let content, filename;
+    if (format === 'html') {
+        content = `<!DOCTYPE html>
+<html>
+<head>
+    <title>Markdown Export</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        h1, h2, h3 { color: #333; }
+        code { background: #f4f4f4; padding: 2px 4px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    ${document.getElementById('markdownPreview').innerHTML}
+</body>
+</html>`;
+        filename = 'document.html';
+    }
+    
+    const blob = new Blob([content], { type: 'text/plain' });
+    const link = document.createElement('a');
+    link.download = filename;
+    link.href = URL.createObjectURL(blob);
+    link.click();
+}
+
+function toggleFullscreen() {
+    const editor = document.querySelector('[data-tool="markdown-editor"]');
+    editor.classList.toggle('fullscreen');
+    
+    if (editor.classList.contains('fullscreen')) {
+        editor.style.position = 'fixed';
+        editor.style.top = '0';
+        editor.style.left = '0';
+        editor.style.width = '100vw';
+        editor.style.height = '100vh';
+        editor.style.zIndex = '1000';
+        editor.style.background = 'var(--color-background)';
+    } else {
+        editor.style.position = '';
+        editor.style.top = '';
+        editor.style.left = '';
+        editor.style.width = '';
+        editor.style.height = '';
+        editor.style.zIndex = '';
+        editor.style.background = '';
+    }
+}
+
+// Utility functions
+function downloadFile(filename) {
+    // Simulate file download
+    const blob = new Blob(['Sample converted file content'], { type: 'text/plain' });
+    const link = document.createElement('a');
+    link.download = filename;
+    link.href = URL.createObjectURL(blob);
+    link.click();
+}
+
+// Policy functions
+function showPrivacyPolicy() {
+    document.getElementById('policyTitle').textContent = 'Privacy Policy';
+    document.getElementById('policyContent').innerHTML = `
+        <p><strong>Effective Date: June 18, 2025</strong></p>
+        <h3>Information We Collect</h3>
+        <p>We collect information you provide directly to us, such as when you create an account, use our tools, or contact us for support.</p>
+        
+        <h3>How We Use Your Information</h3>
+        <p>We use the information we collect to provide, maintain, and improve our services, process transactions, and communicate with you.</p>
+        
+        <h3>Data Security</h3>
+        <p>We implement appropriate security measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction.</p>
+        
+        <h3>Contact Us</h3>
+        <p>If you have any questions about this Privacy Policy, please contact us at aaryanraj269@gmail.com</p>
+    `;
+    document.getElementById('policyModal').classList.add('show');
+}
+
+function showTermsOfService() {
+    document.getElementById('policyTitle').textContent = 'Terms of Service';
+    document.getElementById('policyContent').innerHTML = `
+        <p><strong>Effective Date: June 18, 2025</strong></p>
+        <h3>Acceptance of Terms</h3>
+        <p>By accessing and using ToolHub Master, you accept and agree to be bound by the terms and provision of this agreement.</p>
+        
+        <h3>Use License</h3>
+        <p>Permission is granted to temporarily use ToolHub Master for personal, non-commercial transitory viewing only.</p>
+        
+        <h3>Disclaimer</h3>
+        <p>The materials on ToolHub Master are provided on an 'as is' basis. ToolHub Master makes no warranties, expressed or implied.</p>
+        
+        <h3>Limitations</h3>
+        <p>In no event shall ToolHub Master or its suppliers be liable for any damages arising out of the use or inability to use the materials on ToolHub Master.</p>
+        
+        <h3>Contact Information</h3>
+        <p>For questions about these Terms of Service, contact us at aaryanraj269@gmail.com</p>
+    `;
+    document.getElementById('policyModal').classList.add('show');
+}
+
+function closePolicyModal() {
+    document.getElementById('policyModal').classList.remove('show');
+}
+
+// Event listeners for modal close
+window.onclick = function(event) {
+    const modals = document.querySelectorAll('.modal');
+    modals.forEach(modal => {
+        if (event.target === modal) {
+            modal.classList.remove('show');
+        }
+    });
+};

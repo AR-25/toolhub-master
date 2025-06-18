@@ -4,40 +4,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ToolHub Master - Professional Tools for Modern Workflows</title>
-    <meta name="description" content="Access 10+ professional tools including AI content detector, PDF converter, QR generator, and more. Get 15 free uses across all tools.">
-    <meta name="keywords" content="tools, AI detector, PDF converter, QR generator, URL shortener, plagiarism checker">
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
-    
-    <!-- Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-M68FKRBLX2"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', 'G-M68FKRBLX2');
-    </script>
 </head>
 <body>
-    <!-- Header -->
+    <!-- Header Section -->
     <header class="header">
         <div class="container">
-            <div class="header-content">
-                <div class="logo-section">
-                    <h1 class="logo">ToolHub Master</h1>
-                    <p class="tagline">Professional tools for modern workflows</p>
+            <div class="header__content">
+                <div class="branding">
+                    <h1 class="branding__title">ToolHub Master</h1>
+                    <p class="branding__tagline">Professional tools for modern workflows</p>
                 </div>
-                <div class="header-actions">
-                    <div class="usage-counter">
-                        <span id="usageDisplay">15/15 uses remaining</span>
+                
+                <div class="header__controls">
+                    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+                        <span class="theme-toggle__icon">🌙</span>
+                    </button>
+                    
+                    <div class="user-info">
+                        <div class="usage-counter">
+                            <span id="usageDisplay">15/15 uses remaining</span>
+                        </div>
+                        <div class="user-greeting" id="userGreeting" style="display: none;">
+                            <span id="welcomeMessage"></span>
+                        </div>
                     </div>
-                    <button id="themeToggle" class="btn btn--secondary">🌙</button>
-                    <div id="userSection" class="user-section hidden">
-                        <span id="userGreeting"></span>
-                        <button id="signOutBtn" class="btn btn--outline btn--sm">Sign Out</button>
-                    </div>
-                    <button id="upgradeBtn" class="btn btn--primary">Upgrade to Pro</button>
+                    
+                    <button class="btn btn--primary" id="authButton">Sign In</button>
                 </div>
             </div>
         </div>
@@ -46,174 +40,198 @@
     <!-- Main Content -->
     <main class="main">
         <div class="container">
-            <!-- Hero Section -->
-            <section class="hero">
-                <h2>Access 10+ Professional Tools</h2>
-                <p>Get 15 free uses across all tools. Sign in for 5 additional uses!</p>
-            </section>
-
             <!-- Tools Grid -->
             <section class="tools-grid">
                 <!-- AI Content Detector -->
                 <div class="tool-card" data-tool="ai-detector">
-                    <div class="tool-icon">🤖</div>
-                    <h3>AI Content Detector</h3>
-                    <p>Detect AI-generated text with 99% accuracy</p>
-                    <div class="tool-content">
-                        <textarea id="aiText" placeholder="Paste your text here to check if it's AI-generated..."></textarea>
-                        <button class="btn btn--primary tool-btn" onclick="runAIDetector()">Analyze Text</button>
-                        <div id="aiResult" class="tool-result"></div>
+                    <div class="tool-card__icon">🤖</div>
+                    <h3 class="tool-card__title">AI Content Detector</h3>
+                    <p class="tool-card__description">Detect AI-generated text with 99% accuracy</p>
+                    <div class="tool-card__content">
+                        <textarea class="form-control" placeholder="Paste text to analyze..." id="aiDetectorText"></textarea>
+                        <button class="btn btn--primary btn--full-width" onclick="analyzeText()">Analyze Text</button>
+                        <div class="tool-result" id="aiDetectorResult"></div>
                     </div>
                 </div>
 
-                <!-- PDF Converter -->
+                <!-- PDF Converter Suite -->
                 <div class="tool-card" data-tool="pdf-converter">
-                    <div class="tool-icon">📄</div>
-                    <h3>PDF Converter Suite</h3>
-                    <p>Convert, compress, merge, and split PDFs</p>
-                    <div class="tool-content">
-                        <input type="file" id="pdfFile" accept=".pdf" multiple>
-                        <select id="pdfOperation">
-                            <option value="compress">Compress PDF</option>
-                            <option value="merge">Merge PDFs</option>
-                            <option value="split">Split PDF</option>
+                    <div class="tool-card__icon">📄</div>
+                    <h3 class="tool-card__title">PDF Converter Suite</h3>
+                    <p class="tool-card__description">Convert, compress, merge, and split PDFs</p>
+                    <div class="tool-card__content">
+                        <div class="file-upload" id="pdfUpload">
+                            <div class="file-upload__area">
+                                <p>Drag & drop PDF file here or click to browse</p>
+                                <input type="file" accept=".pdf" id="pdfFile">
+                            </div>
+                        </div>
+                        <select class="form-control" id="conversionFormat">
+                            <option value="word">PDF to Word</option>
+                            <option value="excel">PDF to Excel</option>
+                            <option value="powerpoint">PDF to PowerPoint</option>
                         </select>
-                        <button class="btn btn--primary tool-btn" onclick="runPDFConverter()">Process PDF</button>
-                        <div id="pdfResult" class="tool-result"></div>
+                        <button class="btn btn--primary btn--full-width" onclick="convertPDF()">Convert PDF</button>
+                        <div class="tool-result" id="pdfConverterResult"></div>
                     </div>
                 </div>
 
-                <!-- QR Code Generator -->
+                <!-- QR Code Generator Pro -->
                 <div class="tool-card" data-tool="qr-generator">
-                    <div class="tool-icon">⬜</div>
-                    <h3>QR Code Generator Pro</h3>
-                    <p>Create custom QR codes with analytics</p>
-                    <div class="tool-content">
-                        <input type="text" id="qrText" placeholder="Enter text or URL">
-                        <div class="qr-options">
-                            <input type="color" id="qrColor" value="#000000">
-                            <select id="qrSize">
-                                <option value="200">Small (200px)</option>
-                                <option value="300" selected>Medium (300px)</option>
-                                <option value="400">Large (400px)</option>
+                    <div class="tool-card__icon">⬜</div>
+                    <h3 class="tool-card__title">QR Code Generator Pro</h3>
+                    <p class="tool-card__description">Create custom QR codes with analytics</p>
+                    <div class="tool-card__content">
+                        <input type="text" class="form-control" placeholder="Enter text or URL" id="qrText">
+                        <div class="form-group">
+                            <label class="form-label">Size</label>
+                            <select class="form-control" id="qrSize">
+                                <option value="128">128px</option>
+                                <option value="256" selected>256px</option>
+                                <option value="512">512px</option>
                             </select>
                         </div>
-                        <button class="btn btn--primary tool-btn" onclick="generateQR()">Generate QR Code</button>
-                        <div id="qrResult" class="tool-result"></div>
-                    </div>
-                </div>
-
-                <!-- Image Compressor -->
-                <div class="tool-card" data-tool="image-compressor">
-                    <div class="tool-icon">🖼️</div>
-                    <h3>Smart Image Compressor</h3>
-                    <p>Optimize images without quality loss</p>
-                    <div class="tool-content">
-                        <input type="file" id="imageFile" accept="image/*">
-                        <div class="compression-options">
-                            <label for="quality">Quality: <span id="qualityValue">80</span>%</label>
-                            <input type="range" id="quality" min="10" max="100" value="80">
+                        <div class="color-inputs">
+                            <div class="color-input">
+                                <label class="form-label">Foreground</label>
+                                <input type="color" value="#000000" id="qrForeground">
+                            </div>
+                            <div class="color-input">
+                                <label class="form-label">Background</label>
+                                <input type="color" value="#ffffff" id="qrBackground">
+                            </div>
                         </div>
-                        <button class="btn btn--primary tool-btn" onclick="compressImage()">Compress Image</button>
-                        <div id="imageResult" class="tool-result"></div>
+                        <button class="btn btn--primary btn--full-width" onclick="generateQR()">Generate QR Code</button>
+                        <div class="tool-result" id="qrResult"></div>
                     </div>
                 </div>
 
-                <!-- URL Shortener -->
+                <!-- Smart Image Compressor -->
+                <div class="tool-card" data-tool="image-compressor">
+                    <div class="tool-card__icon">🖼️</div>
+                    <h3 class="tool-card__title">Smart Image Compressor</h3>
+                    <p class="tool-card__description">Optimize images without quality loss</p>
+                    <div class="tool-card__content">
+                        <div class="file-upload">
+                            <div class="file-upload__area">
+                                <p>Drag & drop image here or click to browse</p>
+                                <input type="file" accept="image/*" id="imageFile">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Quality: <span id="qualityValue">80</span>%</label>
+                            <input type="range" min="10" max="100" value="80" id="qualitySlider">
+                        </div>
+                        <button class="btn btn--primary btn--full-width" onclick="compressImage()">Compress Image</button>
+                        <div class="tool-result" id="imageCompressorResult"></div>
+                    </div>
+                </div>
+
+                <!-- URL Shortener Plus -->
                 <div class="tool-card" data-tool="url-shortener">
-                    <div class="tool-icon">🔗</div>
-                    <h3>URL Shortener Plus</h3>
-                    <p>Shorten URLs with detailed analytics</p>
-                    <div class="tool-content">
-                        <input type="url" id="longUrl" placeholder="Enter your long URL here">
-                        <button class="btn btn--primary tool-btn" onclick="shortenURL()">Shorten URL</button>
-                        <div id="urlResult" class="tool-result"></div>
+                    <div class="tool-card__icon">🔗</div>
+                    <h3 class="tool-card__title">URL Shortener Plus</h3>
+                    <p class="tool-card__description">Shorten URLs with detailed analytics</p>
+                    <div class="tool-card__content">
+                        <input type="url" class="form-control" placeholder="Enter long URL" id="longUrl">
+                        <input type="text" class="form-control" placeholder="Custom alias (optional)" id="customAlias">
+                        <button class="btn btn--primary btn--full-width" onclick="shortenUrl()">Shorten URL</button>
+                        <div class="tool-result" id="urlShortenerResult"></div>
                     </div>
                 </div>
 
                 <!-- Plagiarism Checker -->
                 <div class="tool-card" data-tool="plagiarism-checker">
-                    <div class="tool-icon">🔍</div>
-                    <h3>Plagiarism Checker</h3>
-                    <p>Detect duplicate content instantly</p>
-                    <div class="tool-content">
-                        <textarea id="plagiarismText" placeholder="Paste your text here to check for plagiarism..."></textarea>
-                        <button class="btn btn--primary tool-btn" onclick="checkPlagiarism()">Check Plagiarism</button>
-                        <div id="plagiarismResult" class="tool-result"></div>
+                    <div class="tool-card__icon">🔍</div>
+                    <h3 class="tool-card__title">Plagiarism Checker</h3>
+                    <p class="tool-card__description">Detect duplicate content instantly</p>
+                    <div class="tool-card__content">
+                        <textarea class="form-control" placeholder="Paste text to check for plagiarism..." id="plagiarismText"></textarea>
+                        <button class="btn btn--primary btn--full-width" onclick="checkPlagiarism()">Check Plagiarism</button>
+                        <div class="tool-result" id="plagiarismResult"></div>
                     </div>
                 </div>
 
                 <!-- Text Summarizer -->
                 <div class="tool-card" data-tool="text-summarizer">
-                    <div class="tool-icon">📝</div>
-                    <h3>Text Summarizer</h3>
-                    <p>AI-powered content summarization</p>
-                    <div class="tool-content">
-                        <textarea id="summaryText" placeholder="Paste your text here to generate a summary..."></textarea>
-                        <select id="summaryLength">
+                    <div class="tool-card__icon">📝</div>
+                    <h3 class="tool-card__title">Text Summarizer</h3>
+                    <p class="tool-card__description">AI-powered content summarization</p>
+                    <div class="tool-card__content">
+                        <textarea class="form-control" placeholder="Enter text to summarize..." id="summarizerText"></textarea>
+                        <select class="form-control" id="summaryLength">
                             <option value="short">Short Summary</option>
                             <option value="medium" selected>Medium Summary</option>
-                            <option value="long">Detailed Summary</option>
+                            <option value="long">Long Summary</option>
                         </select>
-                        <button class="btn btn--primary tool-btn" onclick="summarizeText()">Summarize Text</button>
-                        <div id="summaryResult" class="tool-result"></div>
+                        <button class="btn btn--primary btn--full-width" onclick="summarizeText()">Summarize</button>
+                        <div class="tool-result" id="summarizerResult"></div>
                     </div>
                 </div>
 
                 <!-- Color Palette Generator -->
                 <div class="tool-card" data-tool="color-generator">
-                    <div class="tool-icon">🎨</div>
-                    <h3>Color Palette Generator</h3>
-                    <p>Extract beautiful color schemes</p>
-                    <div class="tool-content">
-                        <input type="file" id="colorImage" accept="image/*">
-                        <div class="color-options">
-                            <label for="colorCount">Colors: <span id="colorCountValue">5</span></label>
-                            <input type="range" id="colorCount" min="3" max="10" value="5">
+                    <div class="tool-card__icon">🎨</div>
+                    <h3 class="tool-card__title">Color Palette Generator</h3>
+                    <p class="tool-card__description">Extract beautiful color schemes</p>
+                    <div class="tool-card__content">
+                        <div class="file-upload">
+                            <div class="file-upload__area">
+                                <p>Upload image to extract colors</p>
+                                <input type="file" accept="image/*" id="colorImageFile">
+                            </div>
                         </div>
-                        <button class="btn btn--primary tool-btn" onclick="generatePalette()">Generate Palette</button>
-                        <div id="colorResult" class="tool-result"></div>
+                        <button class="btn btn--secondary btn--full-width" onclick="generateRandomPalette()">Generate Random Palette</button>
+                        <button class="btn btn--primary btn--full-width" onclick="extractColors()">Extract from Image</button>
+                        <div class="tool-result" id="colorGeneratorResult"></div>
                     </div>
                 </div>
 
                 <!-- Password Generator -->
                 <div class="tool-card" data-tool="password-generator">
-                    <div class="tool-icon">🔐</div>
-                    <h3>Password Generator</h3>
-                    <p>Create secure passwords instantly</p>
-                    <div class="tool-content">
-                        <div class="password-options">
-                            <label for="passwordLength">Length: <span id="passwordLengthValue">12</span></label>
-                            <input type="range" id="passwordLength" min="6" max="50" value="12">
-                            <div class="checkboxes">
-                                <label><input type="checkbox" id="includeUppercase" checked> Uppercase</label>
-                                <label><input type="checkbox" id="includeLowercase" checked> Lowercase</label>
-                                <label><input type="checkbox" id="includeNumbers" checked> Numbers</label>
-                                <label><input type="checkbox" id="includeSymbols" checked> Symbols</label>
-                            </div>
+                    <div class="tool-card__icon">🔐</div>
+                    <h3 class="tool-card__title">Password Generator</h3>
+                    <p class="tool-card__description">Create secure passwords instantly</p>
+                    <div class="tool-card__content">
+                        <div class="form-group">
+                            <label class="form-label">Length: <span id="lengthValue">16</span></label>
+                            <input type="range" min="8" max="128" value="16" id="passwordLength">
                         </div>
-                        <button class="btn btn--primary tool-btn" onclick="generatePassword()">Generate Password</button>
-                        <div id="passwordResult" class="tool-result"></div>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" checked id="includeUppercase"> Uppercase (A-Z)</label>
+                            <label><input type="checkbox" checked id="includeLowercase"> Lowercase (a-z)</label>
+                            <label><input type="checkbox" checked id="includeNumbers"> Numbers (0-9)</label>
+                            <label><input type="checkbox" checked id="includeSymbols"> Symbols (!@#$...)</label>
+                        </div>
+                        <button class="btn btn--primary btn--full-width" onclick="generatePassword()">Generate Password</button>
+                        <div class="tool-result" id="passwordResult"></div>
                     </div>
                 </div>
 
                 <!-- Markdown Editor -->
-                <div class="tool-card" data-tool="markdown-editor">
-                    <div class="tool-icon">✍️</div>
-                    <h3>Markdown Editor</h3>
-                    <p>Live editing with real-time preview</p>
-                    <div class="tool-content">
-                        <div class="markdown-editor">
-                            <div class="editor-pane">
-                                <textarea id="markdownInput" placeholder="# Welcome to Markdown Editor&#10;&#10;Start typing your markdown here..."></textarea>
+                <div class="tool-card tool-card--large" data-tool="markdown-editor">
+                    <div class="tool-card__icon">✍️</div>
+                    <h3 class="tool-card__title">Markdown Editor</h3>
+                    <p class="tool-card__description">Live editing with real-time preview</p>
+                    <div class="tool-card__content">
+                        <div class="markdown-toolbar">
+                            <button onclick="insertMarkdown('**', '**')" title="Bold">B</button>
+                            <button onclick="insertMarkdown('*', '*')" title="Italic">I</button>
+                            <button onclick="insertMarkdown('# ', '')" title="Heading">H</button>
+                            <button onclick="insertMarkdown('- ', '')" title="List">•</button>
+                            <button onclick="insertMarkdown('`', '`')" title="Code">&lt;/&gt;</button>
+                        </div>
+                        <div class="markdown-container">
+                            <div class="markdown-pane">
+                                <textarea id="markdownInput" placeholder="Type your markdown here..."></textarea>
                             </div>
-                            <div class="preview-pane">
+                            <div class="markdown-pane">
                                 <div id="markdownPreview" class="markdown-preview"></div>
                             </div>
                         </div>
                         <div class="markdown-actions">
-                            <button class="btn btn--secondary" onclick="downloadMarkdown()">Download .md</button>
-                            <button class="btn btn--secondary" onclick="copyMarkdown()">Copy Text</button>
+                            <button class="btn btn--secondary" onclick="exportMarkdown('html')">Export HTML</button>
+                            <button class="btn btn--primary" onclick="toggleFullscreen()">Fullscreen</button>
                         </div>
                     </div>
                 </div>
@@ -224,83 +242,71 @@
     <!-- Footer -->
     <footer class="footer">
         <div class="container">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h4>ToolHub Master</h4>
-                    <p>Professional tools for modern workflows</p>
+            <div class="footer__content">
+                <div class="footer__info">
+                    <p>&copy; 2025 Aaryan Raj</p>
+                    <p>Contact: <a href="mailto:aaryanraj269@gmail.com">aaryanraj269@gmail.com</a></p>
+                    <p>LinkedIn: <a href="https://www.linkedin.com/in/aaryan-raj/" target="_blank">https://www.linkedin.com/in/aaryan-raj/</a></p>
                 </div>
-                <div class="footer-section">
-                    <h4>Legal</h4>
-                    <a href="#" onclick="showPrivacyPolicy()">Privacy Policy</a>
-                    <a href="#" onclick="showTermsOfService()">Terms of Service</a>
-                    <a href="#" onclick="showAbout()">About</a>
-                    <a href="#" onclick="showContact()">Contact</a>
-                </div>
-                <div class="footer-section">
-                    <h4>Contact</h4>
-                    <p>© 2025 Aaryan Raj</p>
-                    <a href="mailto:aaryanraj269@gmail.com">aaryanraj269@gmail.com</a>
-                    <a href="https://www.linkedin.com/in/aaryan-raj/" target="_blank">LinkedIn Profile</a>
+                <div class="footer__links">
+                    <a href="#privacy" onclick="showPrivacyPolicy()">Privacy Policy</a>
+                    <a href="#terms" onclick="showTermsOfService()">Terms of Service</a>
                 </div>
             </div>
         </div>
     </footer>
 
     <!-- Sign In Modal -->
-    <div id="signInModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Sign In to Get 5 More Free Uses!</h2>
-            <p>Enter your email to unlock additional features</p>
-            <div class="form-group">
-                <input type="email" id="emailInput" placeholder="Enter your email address" class="form-control">
+    <div class="modal" id="signInModal">
+        <div class="modal__backdrop" onclick="closeSignInModal()"></div>
+        <div class="modal__content">
+            <div class="modal__header">
+                <h2>Sign In to Get +5 Bonus Uses</h2>
+                <button class="modal__close" onclick="closeSignInModal()">&times;</button>
             </div>
-            <button id="signInBtn" class="btn btn--primary btn--full-width">Sign In</button>
-            <p class="modal-note">No password required. We'll remember you on this device.</p>
+            <div class="modal__body">
+                <form id="signInForm">
+                    <div class="form-group">
+                        <label class="form-label">Email Address</label>
+                        <input type="email" class="form-control" id="signInEmail" required>
+                    </div>
+                    <button type="submit" class="btn btn--primary btn--full-width">Get +5 Bonus Uses</button>
+                </form>
+            </div>
         </div>
     </div>
 
-    <!-- Upgrade Modal -->
-    <div id="upgradeModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Upgrade to Pro</h2>
-            <p>Unlock unlimited access to all tools</p>
-            <div class="pricing-cards">
-                <div class="pricing-card">
-                    <h3>Pro</h3>
-                    <div class="price">$9.99<span>/month</span></div>
-                    <ul>
-                        <li>Unlimited tool usage</li>
-                        <li>Priority support</li>
-                        <li>Advanced features</li>
-                        <li>No ads</li>
-                    </ul>
-                    <button class="btn btn--primary btn--full-width" onclick="trackUpgrade('pro')">Choose Pro</button>
-                </div>
-                <div class="pricing-card featured">
-                    <h3>Business</h3>
-                    <div class="price">$24.99<span>/month</span></div>
-                    <ul>
-                        <li>Everything in Pro</li>
-                        <li>Team collaboration</li>
-                        <li>API access</li>
-                        <li>Custom integrations</li>
-                    </ul>
-                    <button class="btn btn--primary btn--full-width" onclick="trackUpgrade('business')">Choose Business</button>
+    <!-- Usage Limit Modal -->
+    <div class="modal" id="usageLimitModal">
+        <div class="modal__backdrop" onclick="closeUsageLimitModal()"></div>
+        <div class="modal__content">
+            <div class="modal__header">
+                <h2>Usage Limit Reached</h2>
+                <button class="modal__close" onclick="closeUsageLimitModal()">&times;</button>
+            </div>
+            <div class="modal__body">
+                <p>You've reached your daily usage limit. Sign in to get +5 bonus uses, or upgrade to Pro for unlimited access.</p>
+                <div class="modal__actions">
+                    <button class="btn btn--secondary" onclick="openSignInModal()">Sign In for +5 Uses</button>
+                    <button class="btn btn--primary">Upgrade to Pro</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="loading-overlay hidden">
-        <div class="spinner"></div>
-        <p>Processing...</p>
+    <!-- Policy Modal -->
+    <div class="modal" id="policyModal">
+        <div class="modal__backdrop" onclick="closePolicyModal()"></div>
+        <div class="modal__content">
+            <div class="modal__header">
+                <h2 id="policyTitle"></h2>
+                <button class="modal__close" onclick="closePolicyModal()">&times;</button>
+            </div>
+            <div class="modal__body">
+                <div id="policyContent"></div>
+            </div>
+        </div>
     </div>
-
-    <!-- Toast Notifications -->
-    <div id="toastContainer" class="toast-container"></div>
 
     <script src="app.js"></script>
 </body>
