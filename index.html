@@ -3,12 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ToolHub Master - Professional Tools for Modern Workflows</title>
-    <link rel="stylesheet" href="style.css">
+    <title>ToolHub Master - Your Ultimate Productivity Suite</title>
+    <meta name="description" content="Access 8 powerful AI and productivity tools in one place. AI Content Detector, PDF Converter, Plagiarism Checker, and more.">
+    <meta name="keywords" content="AI tools, PDF converter, plagiarism checker, productivity tools, online tools">
     
-    <!-- External Libraries -->
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="ToolHub Master - Your Ultimate Productivity Suite">
+    <meta property="og:description" content="Access 8 powerful AI and productivity tools in one place">
+    <meta property="og:type" content="website">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛠️</text></svg>">
+    
+    <!-- External Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-M68FKRBLX2"></script>
@@ -18,358 +28,254 @@
         gtag('js', new Date());
         gtag('config', 'G-M68FKRBLX2');
     </script>
+    
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <!-- Header -->
     <header class="header">
         <div class="container">
-            <div class="header-content">
+            <div class="header__content">
                 <div class="logo">
                     <h1>🛠️ ToolHub Master</h1>
-                    <p>Professional tools for modern workflows</p>
                 </div>
-                <div class="user-info">
-                    <div class="usage-counter">
-                        <span id="usageCount">15/15 uses remaining</span>
+                <div class="header__actions">
+                    <div class="usage-counter" id="usageDisplay">Uses: 15/15</div>
+                    <div class="user-info hidden" id="userInfo">
+                        <span id="userGreeting">Welcome!</span>
+                        <button class="btn btn--sm btn--outline" id="signOutBtn">Sign Out</button>
                     </div>
-                    <div class="auth-section">
-                        <div id="signedOutSection">
-                            <button class="btn btn--primary" id="signInBtn">Sign In</button>
-                        </div>
-                        <div id="signedInSection" class="hidden">
-                            <span>Welcome, <span id="userEmail"></span>!</span>
-                            <button class="btn btn--outline btn--sm" id="signOutBtn">Sign Out</button>
-                        </div>
-                    </div>
+                    <button class="btn btn--sm theme-toggle" id="themeToggle">🌙</button>
+                    <button class="btn btn--sm btn--primary" id="signInBtn">Sign In</button>
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="main">
+    <!-- Hero Section -->
+    <section class="hero">
         <div class="container">
-            <div class="tools-grid">
-                <!-- AI Content Detector -->
-                <div class="tool-card" data-tool="ai-detector">
-                    <div class="tool-header">
-                        <span class="tool-emoji">🤖</span>
-                        <h3>AI Content Detector</h3>
-                        <p>Detect AI-generated text with advanced analysis</p>
-                    </div>
-                    <div class="tool-content">
-                        <textarea class="form-control" placeholder="Paste your text here to analyze for AI-generated content..." rows="5"></textarea>
-                        <button class="btn btn--primary btn--full-width">Analyze Text</button>
-                        <div class="tool-result hidden"></div>
-                    </div>
-                </div>
+            <h1 class="hero__title">Your Ultimate Productivity Suite</h1>
+            <p class="hero__subtitle">Access 8 powerful AI and productivity tools in one place</p>
+        </div>
+    </section>
 
-                <!-- PDF Converter Suite -->
-                <div class="tool-card" data-tool="pdf-converter">
-                    <div class="tool-header">
-                        <span class="tool-emoji">📄</span>
-                        <h3>PDF Converter Suite</h3>
-                        <p>Convert and process your documents</p>
-                    </div>
-                    <div class="tool-content">
-                        <div class="file-upload-area">
-                            <input type="file" accept=".pdf,.doc,.docx,.txt" hidden>
-                            <div class="upload-content">
-                                <span>📁</span>
-                                <p>Click to upload or drag & drop your file</p>
-                            </div>
-                        </div>
-                        <select class="form-control">
-                            <option value="pdf-to-word">PDF to Word</option>
-                            <option value="pdf-to-excel">PDF to Excel</option>
-                            <option value="compress">Compress PDF</option>
-                            <option value="merge">Merge PDFs</option>
-                        </select>
-                        <button class="btn btn--primary btn--full-width">Convert File</button>
-                        <div class="tool-result hidden"></div>
-                    </div>
-                </div>
+    <!-- Tools Grid -->
+    <section class="container">
+        <div class="tools-grid">
+            <div class="tool-card" data-tool="ai-detector">
+                <div class="tool-card__icon">🤖</div>
+                <h3 class="tool-card__title">AI Content Detector</h3>
+                <p class="tool-card__description">Detect AI-generated text with advanced analysis</p>
+                <span class="tool-card__category">AI Analysis</span>
+            </div>
 
-                <!-- QR Code Generator -->
-                <div class="tool-card" data-tool="qr-generator">
-                    <div class="tool-header">
-                        <span class="tool-emoji">⬜</span>
-                        <h3>QR Code Generator Pro</h3>
-                        <p>Create custom QR codes with styling options</p>
-                    </div>
-                    <div class="tool-content">
-                        <input type="text" class="form-control" placeholder="Enter text or URL to encode">
-                        <div class="qr-options">
-                            <select class="form-control">
-                                <option value="200">Small (200px)</option>
-                                <option value="300" selected>Medium (300px)</option>
-                                <option value="400">Large (400px)</option>
-                            </select>
-                            <input type="color" value="#000000" class="form-control color-input">
-                        </div>
-                        <button class="btn btn--primary btn--full-width">Generate QR Code</button>
-                        <div class="tool-result hidden"></div>
-                    </div>
-                </div>
+            <div class="tool-card" data-tool="pdf-converter">
+                <div class="tool-card__icon">📄</div>
+                <h3 class="tool-card__title">PDF Converter Suite</h3>
+                <p class="tool-card__description">Convert and process your documents</p>
+                <span class="tool-card__category">Document Processing</span>
+            </div>
 
-                <!-- Image Compressor -->
-                <div class="tool-card" data-tool="image-compressor">
-                    <div class="tool-header">
-                        <span class="tool-emoji">🖼️</span>
-                        <h3>Smart Image Compressor</h3>
-                        <p>Optimize images while maintaining quality</p>
-                    </div>
-                    <div class="tool-content">
-                        <div class="file-upload-area">
-                            <input type="file" accept="image/*" hidden>
-                            <div class="upload-content">
-                                <span>🖼️</span>
-                                <p>Click to upload image for compression</p>
-                            </div>
-                        </div>
-                        <div class="quality-control">
-                            <label>Quality: <span id="qualityValue">80</span>%</label>
-                            <input type="range" min="10" max="100" value="80" id="qualitySlider">
-                        </div>
-                        <button class="btn btn--primary btn--full-width">Compress Image</button>
-                        <div class="tool-result hidden"></div>
-                    </div>
-                </div>
+            <div class="tool-card" data-tool="plagiarism-checker">
+                <div class="tool-card__icon">🔍</div>
+                <h3 class="tool-card__title">Plagiarism Checker</h3>
+                <p class="tool-card__description">Detect duplicate content and sources</p>
+                <span class="tool-card__category">Content Analysis</span>
+            </div>
 
-                <!-- URL Shortener -->
-                <div class="tool-card" data-tool="url-shortener">
-                    <div class="tool-header">
-                        <span class="tool-emoji">🔗</span>
-                        <h3>URL Shortener Plus</h3>
-                        <p>Shorten URLs with analytics tracking</p>
-                    </div>
-                    <div class="tool-content">
-                        <input type="url" class="form-control" placeholder="Enter long URL (e.g., https://example.com)">
-                        <input type="text" class="form-control" placeholder="Custom alias (optional)">
-                        <button class="btn btn--primary btn--full-width">Shorten URL</button>
-                        <div class="tool-result hidden"></div>
-                    </div>
-                </div>
+            <div class="tool-card" data-tool="text-summarizer">
+                <div class="tool-card__icon">📝</div>
+                <h3 class="tool-card__title">Text Summarizer</h3>
+                <p class="tool-card__description">AI-powered intelligent text summarization</p>
+                <span class="tool-card__category">AI Writing</span>
+            </div>
 
-                <!-- Plagiarism Checker -->
-                <div class="tool-card" data-tool="plagiarism-checker">
-                    <div class="tool-header">
-                        <span class="tool-emoji">🔍</span>
-                        <h3>Plagiarism Checker</h3>
-                        <p>Detect duplicate content and sources</p>
-                    </div>
-                    <div class="tool-content">
-                        <textarea class="form-control" placeholder="Paste your content here to check for plagiarism..." rows="5"></textarea>
-                        <button class="btn btn--primary btn--full-width">Check Plagiarism</button>
-                        <div class="tool-result hidden"></div>
-                    </div>
-                </div>
+            <div class="tool-card" data-tool="image-compressor">
+                <div class="tool-card__icon">🖼️</div>
+                <h3 class="tool-card__title">Smart Image Compressor</h3>
+                <p class="tool-card__description">Optimize images while maintaining quality</p>
+                <span class="tool-card__category">Media Processing</span>
+            </div>
 
-                <!-- Text Summarizer -->
-                <div class="tool-card" data-tool="text-summarizer">
-                    <div class="tool-header">
-                        <span class="tool-emoji">📝</span>
-                        <h3>Text Summarizer</h3>
-                        <p>AI-powered intelligent text summarization</p>
-                    </div>
-                    <div class="tool-content">
-                        <textarea class="form-control" placeholder="Paste long text here to create an intelligent summary..." rows="5"></textarea>
-                        <select class="form-control">
-                            <option value="short">Short Summary (20%)</option>
-                            <option value="medium" selected>Medium Summary (40%)</option>
-                            <option value="long">Long Summary (60%)</option>
-                        </select>
-                        <button class="btn btn--primary btn--full-width">Summarize Text</button>
-                        <div class="tool-result hidden"></div>
-                    </div>
-                </div>
+            <div class="tool-card" data-tool="color-palette">
+                <div class="tool-card__icon">🎨</div>
+                <h3 class="tool-card__title">Color Palette Generator</h3>
+                <p class="tool-card__description">Extract beautiful color schemes from images</p>
+                <span class="tool-card__category">Design Tools</span>
+            </div>
 
-                <!-- Color Palette Generator -->
-                <div class="tool-card" data-tool="color-palette">
-                    <div class="tool-header">
-                        <span class="tool-emoji">🎨</span>
-                        <h3>Color Palette Generator</h3>
-                        <p>Extract beautiful color schemes from images</p>
-                    </div>
-                    <div class="tool-content">
-                        <div class="file-upload-area">
-                            <input type="file" accept="image/*" hidden>
-                            <div class="upload-content">
-                                <span>🎨</span>
-                                <p>Upload image to extract colors</p>
-                            </div>
-                        </div>
-                        <button class="btn btn--primary btn--full-width">Generate Palette</button>
-                        <div class="tool-result hidden"></div>
-                    </div>
-                </div>
+            <div class="tool-card" data-tool="password-generator">
+                <div class="tool-card__icon">🔐</div>
+                <h3 class="tool-card__title">Password Generator</h3>
+                <p class="tool-card__description">Create secure passwords with custom options</p>
+                <span class="tool-card__category">Security Tools</span>
+            </div>
 
-                <!-- Password Generator -->
-                <div class="tool-card" data-tool="password-generator">
-                    <div class="tool-header">
-                        <span class="tool-emoji">🔐</span>
-                        <h3>Password Generator</h3>
-                        <p>Create secure passwords with custom options</p>
-                    </div>
-                    <div class="tool-content">
-                        <div class="password-controls">
-                            <label>Length: <span id="lengthValue">16</span> characters</label>
-                            <input type="range" min="8" max="64" value="16" id="passwordLength">
-                            <div class="checkbox-group">
-                                <label><input type="checkbox" checked> Uppercase (A-Z)</label>
-                                <label><input type="checkbox" checked> Lowercase (a-z)</label>
-                                <label><input type="checkbox" checked> Numbers (0-9)</label>
-                                <label><input type="checkbox" checked> Symbols (!@#$)</label>
-                            </div>
-                        </div>
-                        <button class="btn btn--primary btn--full-width">Generate Password</button>
-                        <div class="tool-result hidden"></div>
-                    </div>
-                </div>
-
-                <!-- Markdown Editor -->
-                <div class="tool-card tool-card--large" data-tool="markdown-editor">
-                    <div class="tool-header">
-                        <span class="tool-emoji">✍️</span>
-                        <h3>Markdown Editor</h3>
-                        <p>Live editing with real-time preview and export</p>
-                    </div>
-                    <div class="tool-content">
-                        <div class="markdown-toolbar">
-                            <button class="btn btn--sm" data-action="bold">B</button>
-                            <button class="btn btn--sm" data-action="italic">I</button>
-                            <button class="btn btn--sm" data-action="heading">H1</button>
-                            <button class="btn btn--sm" data-action="link">Link</button>
-                            <button class="btn btn--sm" data-action="code">Code</button>
-                            <button class="btn btn--sm" data-action="list">List</button>
-                        </div>
-                        <div class="markdown-container">
-                            <textarea class="form-control markdown-input" placeholder="Type your markdown here..." rows="15"># Welcome to Markdown Editor
-
-Write your **markdown** content here and see the *live preview*!
-
-## Features
-- Real-time preview
-- Export options
-- Professional formatting
-
-### Code Example
-```javascript
-function hello() {
-    console.log("Hello, World!");
-}
-```
-
-> This is a blockquote
-
-- List item 1
-- List item 2
-
-[Link to Google](https://google.com)</textarea>
-                            <div class="markdown-preview"></div>
-                        </div>
-                        <div class="markdown-actions">
-                            <button class="btn btn--outline btn--sm" id="exportHtml">Export HTML</button>
-                            <button class="btn btn--outline btn--sm" id="exportMd">Export MD</button>
-                            <button class="btn btn--outline btn--sm" id="copyHtml">Copy HTML</button>
-                        </div>
-                        <div class="tool-result hidden"></div>
-                    </div>
-                </div>
+            <div class="tool-card" data-tool="markdown-editor">
+                <div class="tool-card__icon">✍️</div>
+                <h3 class="tool-card__title">Markdown Editor</h3>
+                <p class="tool-card__description">Live editing with real-time preview and export</p>
+                <span class="tool-card__category">Writing Tools</span>
             </div>
         </div>
-    </main>
+    </section>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-info">
-                    <p>© 2025 Aaryan Raj</p>
-                    <p>Email: <a href="mailto:aaryanraj269@gmail.com">aaryanraj269@gmail.com</a></p>
-                    <p>LinkedIn: <a href="https://www.linkedin.com/in/aaryan-raj/" target="_blank">https://www.linkedin.com/in/aaryan-raj/</a></p>
-                </div>
-                <div class="footer-links">
-                    <a href="#" onclick="showLegalPage('privacy')">Privacy Policy</a>
-                    <a href="#" onclick="showLegalPage('terms')">Terms of Service</a>
-                </div>
+    <!-- Main Tool Modal -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <div class="modal__header">
+                <h2 id="modalTitle">Tool</h2>
+                <button class="modal__close" id="modalClose">&times;</button>
+            </div>
+            <div class="modal__content" id="modalContent">
+                <!-- Tool content will be injected here -->
             </div>
         </div>
-    </footer>
+    </div>
 
-    <!-- Sign In Modal -->
-    <div id="signInModal" class="modal hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Sign In to ToolHub Master</h3>
-                <button class="modal-close">&times;</button>
+    <!-- Authentication Modal -->
+    <div class="modal-overlay" id="authModalOverlay">
+        <div class="modal">
+            <div class="modal__header">
+                <h2>Sign In to ToolHub Master</h2>
+                <button class="modal__close" id="authModalClose">&times;</button>
             </div>
-            <div class="modal-body">
-                <p>Get +5 bonus uses (20 total) by signing in!</p>
-                <form id="signInForm">
-                    <div class="form-group">
-                        <label class="form-label">Email Address</label>
-                        <input type="email" class="form-control" id="emailInput" placeholder="Enter your email" required>
+            <div class="modal__content">
+                <div class="auth-options">
+                    <div id="googleSignInContainer">
+                        <button class="btn btn--primary btn--full-width" id="googleSignInBtn">
+                            <span>🔐 Sign in with Google</span>
+                        </button>
                     </div>
-                    <button type="submit" class="btn btn--primary btn--full-width">Sign In & Get Bonus</button>
-                </form>
+                    
+                    <div class="divider">
+                        <span style="background: var(--color-surface); padding: 0 16px;">OR</span>
+                    </div>
+                    
+                    <div class="email-auth">
+                        <div class="form-group">
+                            <label class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="emailInput" placeholder="Enter your email">
+                        </div>
+                        <button class="btn btn--secondary btn--full-width" id="emailSignInBtn">Send Verification Code</button>
+                        
+                        <div class="otp-section hidden" id="otpSection">
+                            <div class="form-group">
+                                <label class="form-label">Verification Code</label>
+                                <input type="text" class="form-control" id="otpInput" placeholder="Enter 6-digit code" maxlength="6">
+                            </div>
+                            <button class="btn btn--primary btn--full-width" id="verifyOtpBtn">Verify Code</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-16" style="text-align: center; font-size: var(--font-size-sm); color: var(--color-text-secondary);">
+                    By signing in, you agree to our 
+                    <a href="#" id="termsOfServiceLink">Terms of Service</a> and 
+                    <a href="#" id="privacyPolicyLink">Privacy Policy</a>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Upgrade Modal -->
-    <div id="upgradeModal" class="modal hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Upgrade to Pro</h3>
-                <button class="modal-close">&times;</button>
+    <div class="modal-overlay" id="upgradeModalOverlay">
+        <div class="modal">
+            <div class="modal__header">
+                <h2>Upgrade Your Plan</h2>
+                <button class="modal__close" id="upgradeModalClose">&times;</button>
             </div>
-            <div class="modal-body">
-                <p>You've reached your daily limit! Choose a plan for unlimited access.</p>
-                <div class="pricing-grid">
-                    <div class="pricing-card">
-                        <h4>Pro Plan</h4>
-                        <div class="price">$9.99<span>/month</span></div>
-                        <ul>
-                            <li>✓ Unlimited tool uses</li>
-                            <li>✓ Priority support</li>
-                            <li>✓ Advanced features</li>
+            <div class="modal__content">
+                <div class="pricing-plans">
+                    <div class="plan-card">
+                        <h3>Free Plan</h3>
+                        <div class="plan-price">$0/month</div>
+                        <ul class="plan-features">
+                            <li>15 uses per day</li>
+                            <li>Basic tool features</li>
+                            <li>Standard processing</li>
                         </ul>
-                        <button class="btn btn--primary btn--full-width" onclick="handleUpgrade('pro')">Upgrade to Pro</button>
+                        <button class="btn btn--outline btn--full-width" disabled>Current Plan</button>
                     </div>
-                    <div class="pricing-card">
-                        <h4>Business Plan</h4>
-                        <div class="price">$24.99<span>/month</span></div>
-                        <ul>
-                            <li>✓ Everything in Pro</li>
-                            <li>✓ Team collaboration</li>
-                            <li>✓ API access</li>
+                    
+                    <div class="plan-card plan-card--featured">
+                        <h3>Pro Plan</h3>
+                        <div class="plan-price">$9.99/month</div>
+                        <ul class="plan-features">
+                            <li>Unlimited uses</li>
+                            <li>Advanced features</li>
+                            <li>Priority processing</li>
+                            <li>No advertisements</li>
                         </ul>
-                        <button class="btn btn--primary btn--full-width" onclick="handleUpgrade('business')">Upgrade to Business</button>
+                        <button class="btn btn--primary btn--full-width">Upgrade to Pro</button>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn--outline" id="signInForBonus">Sign in for +5 more uses</button>
+                    
+                    <div class="plan-card">
+                        <h3>Business Plan</h3>
+                        <div class="plan-price">$24.99/month</div>
+                        <ul class="plan-features">
+                            <li>Everything in Pro</li>
+                            <li>Team collaboration</li>
+                            <li>API access</li>
+                            <li>Custom branding</li>
+                        </ul>
+                        <button class="btn btn--primary btn--full-width">Upgrade to Business</button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Legal Modal -->
-    <div id="legalModal" class="modal hidden">
-        <div class="modal-content modal-content--large">
-            <div class="modal-header">
-                <h3 id="legalTitle">Legal Document</h3>
-                <button class="modal-close">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div id="legalContent"></div>
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer__content">
+                <div class="footer__section">
+                    <h4>ToolHub Master</h4>
+                    <p>Your ultimate productivity suite with 8 powerful tools in one place.</p>
+                    <p>© 2025 Aaryan Raj. All rights reserved.</p>
+                </div>
+                
+                <div class="footer__section">
+                    <h4>Quick Links</h4>
+                    <a href="#" id="privacyPolicyFooterLink">Privacy Policy</a>
+                    <a href="#" id="termsOfServiceFooterLink">Terms of Service</a>
+                    <a href="mailto:aaryanraj269@gmail.com">Support</a>
+                </div>
+                
+                <div class="footer__section">
+                    <h4>Connect</h4>
+                    <a href="mailto:aaryanraj269@gmail.com">aaryanraj269@gmail.com</a>
+                    <a href="https://www.linkedin.com/in/aaryan-raj/" target="_blank">LinkedIn Profile</a>
+                </div>
+                
+                <div class="footer__section">
+                    <h4>Tools</h4>
+                    <p>AI Content Detector</p>
+                    <p>PDF Converter Suite</p>
+                    <p>Plagiarism Checker</p>
+                    <p>Text Summarizer</p>
+                    <p>Smart Image Compressor</p>
+                    <p>Color Palette Generator</p>
+                    <p>Password Generator</p>
+                    <p>Markdown Editor</p>
+                </div>
             </div>
         </div>
-    </div>
+    </footer>
 
     <!-- Toast Container -->
-    <div id="toastContainer" class="toast-container"></div>
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Google Sign-In -->
+    <div id="g_id_onload"
+         data-client_id="YOUR_GOOGLE_CLIENT_ID"
+         data-context="signin"
+         data-ux_mode="popup"
+         data-callback="handleGoogleSignIn"
+         data-auto_prompt="false">
+    </div>
 
     <script src="app.js"></script>
 </body>
