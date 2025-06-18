@@ -9,188 +9,114 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-M68FKRBLX2"></script>
     <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
-    gtag('config', 'G-XXXXXXXXXX');
+    gtag('config', 'G-M68FKRBLX2');
     </script>
+    
+    <!-- Required external libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.3/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/markdown-it@13.0.1/dist/markdown-it.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.0/dist/browser-image-compression.min.js"></script>
 </head>
 <body>
-    <!-- Cookie Consent Banner -->
-    <div id="cookieConsent" class="cookie-consent">
-        <div class="cookie-content">
-            <p>We use cookies to enhance your experience. By continuing to visit this site you agree to our use of cookies.</p>
-            <button class="btn btn--primary btn--sm" onclick="acceptCookies()">Accept</button>
-        </div>
-    </div>
-
-    <!-- Header -->
-    <header class="header">
-        <nav class="navbar container">
-            <div class="navbar-brand">
-                <h1 class="brand-name">ToolHub Master</h1>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <h1>ToolHub Master</h1>
+                <span class="tagline">Professional tools for modern workflows</span>
             </div>
-            <div class="navbar-menu" id="navbarMenu">
-                <a href="#home" class="nav-link">Home</a>
-                <a href="#tools" class="nav-link">Tools</a>
-                <a href="#pricing" class="nav-link">Pricing</a>
-                <a href="#testimonials" class="nav-link">Reviews</a>
-            </div>
-            <div class="navbar-actions">
-                <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
-                    <span class="theme-icon">🌙</span>
+            <div class="header-actions">
+                <button id="theme-toggle" class="btn-icon" aria-label="Toggle dark mode">
+                    <span id="theme-icon">🌙</span>
                 </button>
-                <button class="btn btn--outline btn--sm">Login</button>
-                <button class="btn btn--primary btn--sm">Sign Up</button>
-                <button class="mobile-menu-toggle" id="mobileMenuToggle">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </button>
+                <button id="upgrade-btn" class="btn btn-primary">Upgrade to Pro</button>
             </div>
-        </nav>
-    </header>
+        </header>
 
-    <!-- Hero Section -->
-    <section id="home" class="hero">
-        <div class="hero-content container">
-            <h1 class="hero-title">All-in-One Productivity Tools</h1>
-            <p class="hero-subtitle">Boost your productivity with our comprehensive suite of AI-powered tools. From content detection to PDF conversion, we've got you covered.</p>
-            <div class="hero-actions">
-                <button class="btn btn--primary btn--lg" onclick="scrollToSection('tools')">Explore Tools</button>
-                <button class="btn btn--outline btn--lg" onclick="openPricingModal()">View Pricing</button>
-            </div>
-            <div class="hero-stats">
-                <div class="stat-item">
-                    <span class="stat-number" data-target="50000">0</span>
-                    <span class="stat-label">Active Users</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-number" data-target="2500000">0</span>
-                    <span class="stat-label">Tools Processed</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-number" data-target="100000">0</span>
-                    <span class="stat-label">Hours Saved</span>
-                </div>
-            </div>
-        </div>
-    </section>
+        <!-- Main content -->
+        <main>
+            <!-- Tools Grid -->
+            <section class="tools-grid" id="tools-grid">
+                <!-- Tool cards will be dynamically generated -->
+            </section>
 
-    <!-- Tools Section -->
-    <section id="tools" class="tools-section">
-        <div class="container">
-            <h2 class="section-title">Powerful Tools at Your Fingertips</h2>
-            <p class="section-subtitle">Choose from our comprehensive collection of productivity tools</p>
-            <div class="tools-grid">
-                <!-- Tools will be populated by JavaScript -->
-            </div>
-        </div>
-    </section>
-
-    <!-- Testimonials Section -->
-    <section id="testimonials" class="testimonials-section">
-        <div class="container">
-            <h2 class="section-title">What Our Users Say</h2>
-            <div class="testimonials-grid">
-                <!-- Testimonials will be populated by JavaScript -->
-            </div>
-        </div>
-    </section>
-
-    <!-- Pricing Section -->
-    <section id="pricing" class="pricing-section">
-        <div class="container">
-            <h2 class="section-title">Choose Your Plan</h2>
-            <p class="section-subtitle">Select the perfect plan for your needs</p>
-            <div class="pricing-grid">
-                <!-- Pricing cards will be populated by JavaScript -->
-            </div>
-        </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h3>ToolHub Master</h3>
-                    <p>Your all-in-one productivity solution</p>
-                </div>
-                <div class="footer-section">
-                    <h4>Legal</h4>
-                    <a href="#" class="footer-link">Privacy Policy</a>
-                    <a href="#" class="footer-link">Terms of Service</a>
-                    <a href="#" class="footer-link">Cookie Policy</a>
-                </div>
-                <div class="footer-section">
-                    <h4>Support</h4>
-                    <a href="#" class="footer-link">Help Center</a>
-                    <a href="#" class="footer-link">Contact Us</a>
-                    <a href="#" class="footer-link">API Documentation</a>
-                </div>
-                <div class="footer-section">
-                    <h4>Connect</h4>
-                    <a href="#" class="footer-link">Twitter</a>
-                    <a href="#" class="footer-link">LinkedIn</a>
-                    <a href="#" class="footer-link">GitHub</a>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p>&copy; 2025 ToolHub Master. All rights reserved.</p>
-            </div>
-        </div>
-    </footer>
-
-    <!-- Tool Modal -->
-    <div id="toolModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="modalTitle">Tool Name</h3>
-                <button class="modal-close" onclick="closeModal()">&times;</button>
-            </div>
-            <div class="modal-body" id="modalBody">
-                <!-- Tool content will be populated by JavaScript -->
-            </div>
-        </div>
-    </div>
-
-    <!-- Pricing Modal -->
-    <div id="pricingModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Choose Your Plan</h3>
-                <button class="modal-close" onclick="closePricingModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="pricing-modal-grid">
-                    <!-- Pricing options will be populated by JavaScript -->
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Usage Limit Modal -->
-    <div id="usageLimitModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Usage Limit Reached</h3>
-                <button class="modal-close" onclick="closeUsageLimitModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="usage-limit-content">
-                    <p>You've reached your daily limit for this tool.</p>
-                    <p>Upgrade to Pro for unlimited access to all tools!</p>
-                    <div class="usage-limit-actions">
-                        <button class="btn btn--primary" onclick="openPricingModal(); closeUsageLimitModal();">Upgrade Now</button>
-                        <button class="btn btn--outline" onclick="closeUsageLimitModal()">Maybe Later</button>
+            <!-- Tool Modal -->
+            <div id="tool-modal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 id="modal-title">Tool Name</h2>
+                        <button id="close-modal" class="btn-icon">&times;</button>
+                    </div>
+                    <div class="modal-body" id="modal-body">
+                        <!-- Tool-specific content will be injected here -->
+                    </div>
+                    <div class="modal-footer">
+                        <div class="usage-counter" id="usage-counter">Uses left: 3/3</div>
+                        <button id="modal-action" class="btn btn-primary">Process</button>
                     </div>
                 </div>
             </div>
-        </div>
+
+            <!-- Upgrade Modal -->
+            <div id="upgrade-modal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>Upgrade to Pro</h2>
+                        <button id="close-upgrade-modal" class="btn-icon">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="pricing-cards">
+                            <div class="pricing-card">
+                                <h3>Pro Plan</h3>
+                                <div class="price">$9.99<span>/month</span></div>
+                                <ul class="feature-list">
+                                    <li>✓ Unlimited tool usage</li>
+                                    <li>✓ Priority support</li>
+                                    <li>✓ No advertisements</li>
+                                    <li>✓ Export capabilities</li>
+                                </ul>
+                                <button class="btn btn-primary btn-full" id="select-pro">Select Pro</button>
+                            </div>
+                            <div class="pricing-card pricing-card-featured">
+                                <div class="popular-badge">Most Popular</div>
+                                <h3>Business Plan</h3>
+                                <div class="price">$24.99<span>/month</span></div>
+                                <ul class="feature-list">
+                                    <li>✓ Everything in Pro</li>
+                                    <li>✓ Team collaboration</li>
+                                    <li>✓ API access</li>
+                                    <li>✓ Custom branding</li>
+                                </ul>
+                                <button class="btn btn-primary btn-full" id="select-business">Select Business</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Toast Notification -->
+            <div id="toast" class="toast">
+                <div id="toast-message"></div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer>
+            <p>© 2025 ToolHub Master. All rights reserved.</p>
+            <div class="footer-links">
+                <a href="#">Privacy Policy</a>
+                <a href="#">Terms of Service</a>
+                <a href="#">Contact</a>
+            </div>
+        </footer>
     </div>
 
     <script src="app.js"></script>
