@@ -5,9 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ToolHub Master - Professional Tools for Modern Workflows</title>
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.3/qrcode.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+    <!-- External Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-M68FKRBLX2"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-M68FKRBLX2');
+    </script>
 </head>
 <body>
     <!-- Header -->
@@ -46,10 +54,10 @@
                     <div class="tool-header">
                         <span class="tool-emoji">🤖</span>
                         <h3>AI Content Detector</h3>
-                        <p>Detect AI-generated text with 99% accuracy</p>
+                        <p>Detect AI-generated text with advanced analysis</p>
                     </div>
                     <div class="tool-content">
-                        <textarea class="form-control" placeholder="Paste your text here to analyze..." rows="6"></textarea>
+                        <textarea class="form-control" placeholder="Paste your text here to analyze for AI-generated content..." rows="6"></textarea>
                         <button class="btn btn--primary btn--full-width">Analyze Text</button>
                         <div class="tool-result hidden"></div>
                     </div>
@@ -60,21 +68,22 @@
                     <div class="tool-header">
                         <span class="tool-emoji">📄</span>
                         <h3>PDF Converter Suite</h3>
-                        <p>Convert, compress, merge, and split PDFs</p>
+                        <p>Convert and process your documents</p>
                     </div>
                     <div class="tool-content">
                         <div class="file-upload-area">
-                            <input type="file" id="pdfFile" accept=".pdf,.doc,.docx,.txt" class="hidden">
+                            <input type="file" accept=".pdf,.doc,.docx,.txt,.rtf" class="hidden">
                             <div class="upload-placeholder">
                                 <span>📁</span>
                                 <p>Drag & drop files here or click to browse</p>
                             </div>
                         </div>
                         <select class="form-control">
-                            <option>PDF to Word</option>
-                            <option>PDF to Excel</option>
-                            <option>PDF to Text</option>
-                            <option>Compress PDF</option>
+                            <option value="pdf-to-word">PDF to Word</option>
+                            <option value="pdf-to-excel">PDF to Excel</option>
+                            <option value="pdf-to-text">PDF to Text</option>
+                            <option value="compress-pdf">Compress PDF</option>
+                            <option value="merge-pdf">Merge PDFs</option>
                         </select>
                         <button class="btn btn--primary btn--full-width">Convert File</button>
                         <div class="tool-result hidden"></div>
@@ -86,17 +95,24 @@
                     <div class="tool-header">
                         <span class="tool-emoji">⬜</span>
                         <h3>QR Code Generator Pro</h3>
-                        <p>Create custom QR codes with analytics</p>
+                        <p>Create custom QR codes with styling options</p>
                     </div>
                     <div class="tool-content">
-                        <input type="text" class="form-control" placeholder="Enter URL or text">
-                        <div class="qr-options flex gap-8">
-                            <select class="form-control">
-                                <option value="200">Small (200px)</option>
-                                <option value="300" selected>Medium (300px)</option>
-                                <option value="400">Large (400px)</option>
-                            </select>
-                            <input type="color" class="form-control" value="#000000">
+                        <input type="text" class="form-control" placeholder="Enter URL, text, or data to encode">
+                        <div class="qr-options">
+                            <div class="form-group">
+                                <label class="form-label">Size</label>
+                                <select class="form-control">
+                                    <option value="200">Small (200px)</option>
+                                    <option value="300" selected>Medium (300px)</option>
+                                    <option value="400">Large (400px)</option>
+                                    <option value="500">Extra Large (500px)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Color</label>
+                                <input type="color" class="form-control" value="#000000">
+                            </div>
                         </div>
                         <button class="btn btn--primary btn--full-width">Generate QR Code</button>
                         <div class="tool-result hidden"></div>
@@ -108,11 +124,11 @@
                     <div class="tool-header">
                         <span class="tool-emoji">🖼️</span>
                         <h3>Smart Image Compressor</h3>
-                        <p>Optimize images without quality loss</p>
+                        <p>Optimize images while maintaining quality</p>
                     </div>
                     <div class="tool-content">
                         <div class="file-upload-area">
-                            <input type="file" id="imageFile" accept="image/*" class="hidden">
+                            <input type="file" accept="image/*" class="hidden">
                             <div class="upload-placeholder">
                                 <span>🖼️</span>
                                 <p>Drag & drop image here or click to browse</p>
@@ -120,7 +136,7 @@
                         </div>
                         <div class="quality-slider">
                             <label>Quality: <span id="qualityValue">80</span>%</label>
-                            <input type="range" min="10" max="100" value="80" id="qualitySlider">
+                            <input type="range" min="10" max="100" value="80" id="qualitySlider" class="form-control">
                         </div>
                         <button class="btn btn--primary btn--full-width">Compress Image</button>
                         <div class="tool-result hidden"></div>
@@ -132,10 +148,10 @@
                     <div class="tool-header">
                         <span class="tool-emoji">🔗</span>
                         <h3>URL Shortener Plus</h3>
-                        <p>Shorten URLs with detailed analytics</p>
+                        <p>Shorten URLs with analytics tracking</p>
                     </div>
                     <div class="tool-content">
-                        <input type="url" class="form-control" placeholder="Enter long URL to shorten">
+                        <input type="url" class="form-control" placeholder="Enter long URL to shorten (e.g., https://example.com)">
                         <input type="text" class="form-control" placeholder="Custom alias (optional)">
                         <button class="btn btn--primary btn--full-width">Shorten URL</button>
                         <div class="tool-result hidden"></div>
@@ -147,10 +163,10 @@
                     <div class="tool-header">
                         <span class="tool-emoji">🔍</span>
                         <h3>Plagiarism Checker</h3>
-                        <p>Detect duplicate content instantly</p>
+                        <p>Detect duplicate content and sources</p>
                     </div>
                     <div class="tool-content">
-                        <textarea class="form-control" placeholder="Paste your content here to check for plagiarism..." rows="6"></textarea>
+                        <textarea class="form-control" placeholder="Paste your content here to check for plagiarism and duplicate sources..." rows="6"></textarea>
                         <button class="btn btn--primary btn--full-width">Check Plagiarism</button>
                         <div class="tool-result hidden"></div>
                     </div>
@@ -161,14 +177,14 @@
                     <div class="tool-header">
                         <span class="tool-emoji">📝</span>
                         <h3>Text Summarizer</h3>
-                        <p>AI-powered content summarization</p>
+                        <p>AI-powered intelligent text summarization</p>
                     </div>
                     <div class="tool-content">
-                        <textarea class="form-control" placeholder="Paste long text here to summarize..." rows="6"></textarea>
+                        <textarea class="form-control" placeholder="Paste long text here to create an intelligent summary..." rows="6"></textarea>
                         <select class="form-control">
-                            <option value="short">Short Summary</option>
-                            <option value="medium" selected>Medium Summary</option>
-                            <option value="long">Long Summary</option>
+                            <option value="short">Short Summary (20%)</option>
+                            <option value="medium" selected>Medium Summary (40%)</option>
+                            <option value="long">Long Summary (60%)</option>
                         </select>
                         <button class="btn btn--primary btn--full-width">Summarize Text</button>
                         <div class="tool-result hidden"></div>
@@ -180,14 +196,14 @@
                     <div class="tool-header">
                         <span class="tool-emoji">🎨</span>
                         <h3>Color Palette Generator</h3>
-                        <p>Extract beautiful color schemes</p>
+                        <p>Extract beautiful color schemes from images</p>
                     </div>
                     <div class="tool-content">
                         <div class="file-upload-area">
-                            <input type="file" id="colorImageFile" accept="image/*" class="hidden">
+                            <input type="file" accept="image/*" class="hidden">
                             <div class="upload-placeholder">
                                 <span>🎨</span>
-                                <p>Upload image to extract colors</p>
+                                <p>Upload image to extract dominant colors</p>
                             </div>
                         </div>
                         <button class="btn btn--primary btn--full-width">Generate Palette</button>
@@ -200,22 +216,22 @@
                     <div class="tool-header">
                         <span class="tool-emoji">🔐</span>
                         <h3>Password Generator</h3>
-                        <p>Create secure passwords instantly</p>
+                        <p>Create secure passwords with custom options</p>
                     </div>
                     <div class="tool-content">
                         <div class="password-options">
                             <div class="form-group">
-                                <label>Length: <span id="lengthValue">16</span></label>
-                                <input type="range" min="8" max="128" value="16" id="passwordLength">
+                                <label>Length: <span id="lengthValue">16</span> characters</label>
+                                <input type="range" min="8" max="128" value="16" id="passwordLength" class="form-control">
                             </div>
                             <div class="checkbox-group">
-                                <label><input type="checkbox" checked> Uppercase</label>
-                                <label><input type="checkbox" checked> Lowercase</label>
-                                <label><input type="checkbox" checked> Numbers</label>
-                                <label><input type="checkbox" checked> Symbols</label>
+                                <label><input type="checkbox" checked> Uppercase Letters (A-Z)</label>
+                                <label><input type="checkbox" checked> Lowercase Letters (a-z)</label>
+                                <label><input type="checkbox" checked> Numbers (0-9)</label>
+                                <label><input type="checkbox" checked> Special Symbols (!@#$%)</label>
                             </div>
                         </div>
-                        <button class="btn btn--primary btn--full-width">Generate Password</button>
+                        <button class="btn btn--primary btn--full-width">Generate Secure Password</button>
                         <div class="tool-result hidden"></div>
                     </div>
                 </div>
@@ -225,30 +241,47 @@
                     <div class="tool-header">
                         <span class="tool-emoji">✍️</span>
                         <h3>Markdown Editor</h3>
-                        <p>Live editing with real-time preview</p>
+                        <p>Live editing with real-time preview and export</p>
                     </div>
                     <div class="tool-content">
                         <div class="markdown-toolbar">
-                            <button class="btn btn--sm" data-action="bold">B</button>
-                            <button class="btn btn--sm" data-action="italic">I</button>
-                            <button class="btn btn--sm" data-action="heading">H</button>
-                            <button class="btn btn--sm" data-action="link">🔗</button>
-                            <button class="btn btn--sm" data-action="code">Code</button>
+                            <button class="btn btn--sm btn--outline" data-action="bold" title="Bold">B</button>
+                            <button class="btn btn--sm btn--outline" data-action="italic" title="Italic">I</button>
+                            <button class="btn btn--sm btn--outline" data-action="heading" title="Heading">H</button>
+                            <button class="btn btn--sm btn--outline" data-action="link" title="Link">🔗</button>
+                            <button class="btn btn--sm btn--outline" data-action="code" title="Code">Code</button>
+                            <button class="btn btn--sm btn--outline" data-action="list" title="List">List</button>
                         </div>
                         <div class="markdown-panes">
-                            <textarea class="form-control" placeholder="Type your markdown here..." rows="10"># Welcome to Markdown Editor
+                            <textarea class="form-control" placeholder="Type your markdown here..." rows="12"># Welcome to Markdown Editor
 
 Type your **markdown** here and see the *live preview*!
 
 ## Features
 - Real-time preview
-- Syntax highlighting
-- Export options</textarea>
+- Syntax highlighting  
+- Export options
+- Professional formatting
+
+### Code Example
+```javascript
+function hello() {
+    console.log("Hello, World!");
+}
+```
+
+> This is a blockquote with **bold** and *italic* text.
+
+- [x] Task completed
+- [ ] Task pending
+
+Visit [Google](https://google.com) for more information.</textarea>
                             <div class="markdown-preview"></div>
                         </div>
                         <div class="markdown-actions">
                             <button class="btn btn--outline">Export HTML</button>
-                            <button class="btn btn--outline">Export MD</button>
+                            <button class="btn btn--outline">Export Markdown</button>
+                            <button class="btn btn--outline">Copy HTML</button>
                         </div>
                     </div>
                 </div>
@@ -266,8 +299,8 @@ Type your **markdown** here and see the *live preview*!
                     <p>LinkedIn: <a href="https://www.linkedin.com/in/aaryan-raj/" target="_blank">https://www.linkedin.com/in/aaryan-raj/</a></p>
                 </div>
                 <div class="footer-links">
-                    <a href="#" target="_blank">Privacy Policy</a>
-                    <a href="#" target="_blank">Terms of Service</a>
+                    <a href="privacy-policy.html" target="_blank">Privacy Policy</a>
+                    <a href="terms-of-service.html" target="_blank">Terms of Service</a>
                 </div>
             </div>
         </div>
@@ -278,16 +311,16 @@ Type your **markdown** here and see the *live preview*!
         <div class="modal-content">
             <div class="modal-header">
                 <h3>Sign In to ToolHub Master</h3>
-                <button class="modal-close">&times;</button>
+                <button class="modal-close" type="button">&times;</button>
             </div>
             <div class="modal-body">
                 <p>Get +5 bonus uses (20 total) by signing in with your email!</p>
                 <form id="signInForm">
                     <div class="form-group">
                         <label class="form-label">Email Address</label>
-                        <input type="email" class="form-control" id="emailInput" required>
+                        <input type="email" class="form-control" id="emailInput" placeholder="Enter your email address" required>
                     </div>
-                    <button type="submit" class="btn btn--primary btn--full-width">Sign In</button>
+                    <button type="submit" class="btn btn--primary btn--full-width">Sign In & Get Bonus Uses</button>
                 </form>
             </div>
         </div>
@@ -298,23 +331,35 @@ Type your **markdown** here and see the *live preview*!
         <div class="modal-content">
             <div class="modal-header">
                 <h3>Upgrade to Pro</h3>
-                <button class="modal-close">&times;</button>
+                <button class="modal-close" type="button">&times;</button>
             </div>
             <div class="modal-body">
-                <p>You've reached your daily limit! Upgrade to Pro for unlimited uses.</p>
+                <p>You've reached your daily limit! Choose a plan for unlimited access.</p>
                 <div class="pricing-options">
                     <div class="pricing-card">
                         <h4>Pro Plan</h4>
                         <p class="price">$9.99/month</p>
                         <ul>
-                            <li>Unlimited tool uses</li>
-                            <li>Priority support</li>
-                            <li>Advanced features</li>
+                            <li>✓ Unlimited tool uses</li>
+                            <li>✓ Priority support</li>
+                            <li>✓ Advanced features</li>
+                            <li>✓ No advertisements</li>
                         </ul>
-                        <button class="btn btn--primary btn--full-width">Upgrade Now</button>
+                        <button class="btn btn--primary btn--full-width" onclick="gtag('event', 'upgrade_click', { plan: 'pro' })">Upgrade to Pro</button>
+                    </div>
+                    <div class="pricing-card" style="margin-top: 16px;">
+                        <h4>Business Plan</h4>
+                        <p class="price">$24.99/month</p>
+                        <ul>
+                            <li>✓ Everything in Pro</li>
+                            <li>✓ Team collaboration</li>
+                            <li>✓ API access</li>
+                            <li>✓ Custom branding</li>
+                        </ul>
+                        <button class="btn btn--primary btn--full-width" onclick="gtag('event', 'upgrade_click', { plan: 'business' })">Upgrade to Business</button>
                     </div>
                 </div>
-                <p class="mt-8">Or <button class="btn btn--outline btn--sm" id="signInForBonus">Sign in for +5 more uses</button></p>
+                <p style="text-align: center; margin-top: 24px;">Or <button class="btn btn--outline btn--sm" id="signInForBonus">Sign in for +5 more uses</button></p>
             </div>
         </div>
     </div>
