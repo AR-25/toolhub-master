@@ -1,282 +1,400 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ToolHub Master - Your Ultimate Productivity Suite</title>
-    <meta name="description" content="Access 8 powerful AI and productivity tools in one place. AI Content Detector, PDF Converter, Plagiarism Checker, and more.">
-    <meta name="keywords" content="AI tools, PDF converter, plagiarism checker, productivity tools, online tools">
-    
-    <!-- Open Graph Meta Tags -->
-    <meta property="og:title" content="ToolHub Master - Your Ultimate Productivity Suite">
-    <meta property="og:description" content="Access 8 powerful AI and productivity tools in one place">
-    <meta property="og:type" content="website">
-    
-    <!-- Favicon -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛠️</text></svg>">
-    
-    <!-- External Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    
-    <!-- Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-M68FKRBLX2"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', 'G-M68FKRBLX2');
-    </script>
-    
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ToolHub Master - Productivity Tools</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 </head>
 <body>
-    <!-- Header -->
+  <div class="app-container">
     <header class="header">
-        <div class="container">
-            <div class="header__content">
-                <div class="logo">
-                    <h1>🛠️ ToolHub Master</h1>
-                </div>
-                <div class="header__actions">
-                    <div class="usage-counter" id="usageDisplay">Uses: 15/15</div>
-                    <div class="user-info hidden" id="userInfo">
-                        <span id="userGreeting">Welcome!</span>
-                        <button class="btn btn--sm btn--outline" id="signOutBtn">Sign Out</button>
-                    </div>
-                    <button class="btn btn--sm theme-toggle" id="themeToggle">🌙</button>
-                    <button class="btn btn--sm btn--primary" id="signInBtn">Sign In</button>
-                </div>
-            </div>
+      <div class="container flex justify-between items-center">
+        <div class="logo">
+          <h1>ToolHub Master</h1>
+          <p class="tagline">Professional productivity tools at your fingertips</p>
         </div>
+        <div class="header-controls flex items-center gap-16">
+          <div class="theme-toggle">
+            <button id="theme-toggle-btn" class="btn btn--secondary btn--sm" aria-label="Toggle theme">
+              <i class="fas fa-sun light-icon"></i>
+              <i class="fas fa-moon dark-icon"></i>
+              <span class="theme-text">Theme</span>
+            </button>
+          </div>
+          <div class="auth-container">
+            <div id="user-status" class="user-status">
+              <span id="usage-count" class="usage-counter">0/15 uses today</span>
+              <button id="login-btn" class="btn btn--primary btn--sm">Verify Email</button>
+            </div>
+            <div id="user-greeting" class="user-greeting hidden">
+              <span id="greeting-text">Welcome!</span>
+              <button id="logout-btn" class="btn btn--outline btn--sm">Log Out</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </header>
 
-    <!-- Hero Section -->
-    <section class="hero">
-        <div class="container">
-            <h1 class="hero__title">Your Ultimate Productivity Suite</h1>
-            <p class="hero__subtitle">Access 8 powerful AI and productivity tools in one place</p>
-        </div>
-    </section>
-
-    <!-- Tools Grid -->
-    <section class="container">
-        <div class="tools-grid">
-            <div class="tool-card" data-tool="ai-detector">
-                <div class="tool-card__icon">🤖</div>
-                <h3 class="tool-card__title">AI Content Detector</h3>
-                <p class="tool-card__description">Detect AI-generated text with advanced analysis</p>
-                <span class="tool-card__category">AI Analysis</span>
-            </div>
-
-            <div class="tool-card" data-tool="pdf-converter">
-                <div class="tool-card__icon">📄</div>
-                <h3 class="tool-card__title">PDF Converter Suite</h3>
-                <p class="tool-card__description">Convert and process your documents</p>
-                <span class="tool-card__category">Document Processing</span>
-            </div>
-
-            <div class="tool-card" data-tool="plagiarism-checker">
-                <div class="tool-card__icon">🔍</div>
-                <h3 class="tool-card__title">Plagiarism Checker</h3>
-                <p class="tool-card__description">Detect duplicate content and sources</p>
-                <span class="tool-card__category">Content Analysis</span>
-            </div>
-
-            <div class="tool-card" data-tool="text-summarizer">
-                <div class="tool-card__icon">📝</div>
-                <h3 class="tool-card__title">Text Summarizer</h3>
-                <p class="tool-card__description">AI-powered intelligent text summarization</p>
-                <span class="tool-card__category">AI Writing</span>
-            </div>
-
-            <div class="tool-card" data-tool="image-compressor">
-                <div class="tool-card__icon">🖼️</div>
-                <h3 class="tool-card__title">Smart Image Compressor</h3>
-                <p class="tool-card__description">Optimize images while maintaining quality</p>
-                <span class="tool-card__category">Media Processing</span>
-            </div>
-
-            <div class="tool-card" data-tool="color-palette">
-                <div class="tool-card__icon">🎨</div>
-                <h3 class="tool-card__title">Color Palette Generator</h3>
-                <p class="tool-card__description">Extract beautiful color schemes from images</p>
-                <span class="tool-card__category">Design Tools</span>
-            </div>
-
-            <div class="tool-card" data-tool="password-generator">
-                <div class="tool-card__icon">🔐</div>
-                <h3 class="tool-card__title">Password Generator</h3>
-                <p class="tool-card__description">Create secure passwords with custom options</p>
-                <span class="tool-card__category">Security Tools</span>
-            </div>
-
-            <div class="tool-card" data-tool="markdown-editor">
-                <div class="tool-card__icon">✍️</div>
-                <h3 class="tool-card__title">Markdown Editor</h3>
-                <p class="tool-card__description">Live editing with real-time preview and export</p>
-                <span class="tool-card__category">Writing Tools</span>
-            </div>
-        </div>
-    </section>
-
-    <!-- Main Tool Modal -->
-    <div class="modal-overlay" id="modalOverlay">
-        <div class="modal">
-            <div class="modal__header">
-                <h2 id="modalTitle">Tool</h2>
-                <button class="modal__close" id="modalClose">&times;</button>
-            </div>
-            <div class="modal__content" id="modalContent">
-                <!-- Tool content will be injected here -->
-            </div>
-        </div>
-    </div>
-
-    <!-- Authentication Modal -->
-    <div class="modal-overlay" id="authModalOverlay">
-        <div class="modal">
-            <div class="modal__header">
-                <h2>Sign In to ToolHub Master</h2>
-                <button class="modal__close" id="authModalClose">&times;</button>
-            </div>
-            <div class="modal__content">
-                <div class="auth-options">
-                    <div id="googleSignInContainer">
-                        <button class="btn btn--primary btn--full-width" id="googleSignInBtn">
-                            <span>🔐 Sign in with Google</span>
-                        </button>
-                    </div>
-                    
-                    <div class="divider">
-                        <span style="background: var(--color-surface); padding: 0 16px;">OR</span>
-                    </div>
-                    
-                    <div class="email-auth">
-                        <div class="form-group">
-                            <label class="form-label">Email Address</label>
-                            <input type="email" class="form-control" id="emailInput" placeholder="Enter your email">
-                        </div>
-                        <button class="btn btn--secondary btn--full-width" id="emailSignInBtn">Send Verification Code</button>
-                        
-                        <div class="otp-section hidden" id="otpSection">
-                            <div class="form-group">
-                                <label class="form-label">Verification Code</label>
-                                <input type="text" class="form-control" id="otpInput" placeholder="Enter 6-digit code" maxlength="6">
-                            </div>
-                            <button class="btn btn--primary btn--full-width" id="verifyOtpBtn">Verify Code</button>
-                        </div>
-                    </div>
+    <main class="main-content">
+      <div class="container">
+        <div class="tools-container">
+          <div class="category-section" data-category="AI Tools">
+            <h2 class="category-title">AI Tools</h2>
+            <div class="tools-grid">
+              <!-- AI Content Detector -->
+              <div class="tool-card" data-tool="ai-content-detector">
+                <div class="tool-header">
+                  <h3 class="tool-title">AI Content Detector</h3>
+                  <i class="fas fa-robot tool-icon"></i>
                 </div>
-                
-                <div class="mt-16" style="text-align: center; font-size: var(--font-size-sm); color: var(--color-text-secondary);">
-                    By signing in, you agree to our 
-                    <a href="#" id="termsOfServiceLink">Terms of Service</a> and 
-                    <a href="#" id="privacyPolicyLink">Privacy Policy</a>
+                <div class="tool-content">
+                  <p>Analyze text to detect if it was generated by AI with confidence scores.</p>
+                  <div class="tool-form">
+                    <textarea id="ai-detector-input" class="form-control" placeholder="Paste text to analyze (min. 100 characters)" rows="5"></textarea>
+                    <button id="ai-detector-btn" class="btn btn--primary mt-8">Analyze Text</button>
+                  </div>
+                  <div id="ai-detector-result" class="tool-result hidden">
+                    <div class="result-header">
+                      <h4>Analysis Results</h4>
+                      <div id="ai-score" class="confidence-score">0%</div>
+                    </div>
+                    <div id="ai-analysis" class="analysis-content"></div>
+                  </div>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Upgrade Modal -->
-    <div class="modal-overlay" id="upgradeModalOverlay">
-        <div class="modal">
-            <div class="modal__header">
-                <h2>Upgrade Your Plan</h2>
-                <button class="modal__close" id="upgradeModalClose">&times;</button>
-            </div>
-            <div class="modal__content">
-                <div class="pricing-plans">
-                    <div class="plan-card">
-                        <h3>Free Plan</h3>
-                        <div class="plan-price">$0/month</div>
-                        <ul class="plan-features">
-                            <li>15 uses per day</li>
-                            <li>Basic tool features</li>
-                            <li>Standard processing</li>
-                        </ul>
-                        <button class="btn btn--outline btn--full-width" disabled>Current Plan</button>
-                    </div>
-                    
-                    <div class="plan-card plan-card--featured">
-                        <h3>Pro Plan</h3>
-                        <div class="plan-price">$9.99/month</div>
-                        <ul class="plan-features">
-                            <li>Unlimited uses</li>
-                            <li>Advanced features</li>
-                            <li>Priority processing</li>
-                            <li>No advertisements</li>
-                        </ul>
-                        <button class="btn btn--primary btn--full-width">Upgrade to Pro</button>
-                    </div>
-                    
-                    <div class="plan-card">
-                        <h3>Business Plan</h3>
-                        <div class="plan-price">$24.99/month</div>
-                        <ul class="plan-features">
-                            <li>Everything in Pro</li>
-                            <li>Team collaboration</li>
-                            <li>API access</li>
-                            <li>Custom branding</li>
-                        </ul>
-                        <button class="btn btn--primary btn--full-width">Upgrade to Business</button>
-                    </div>
+              </div>
+              
+              <!-- Text Summarizer -->
+              <div class="tool-card" data-tool="text-summarizer">
+                <div class="tool-header">
+                  <h3 class="tool-title">Text Summarizer</h3>
+                  <i class="fas fa-file-alt tool-icon"></i>
                 </div>
+                <div class="tool-content">
+                  <p>Generate concise summaries of long texts automatically.</p>
+                  <div class="tool-form">
+                    <textarea id="summarizer-input" class="form-control" placeholder="Paste long text to summarize (min. 200 characters)" rows="5"></textarea>
+                    <div class="form-group mt-8">
+                      <label for="summary-length" class="form-label">Summary Length</label>
+                      <select id="summary-length" class="form-control">
+                        <option value="short">Short (25%)</option>
+                        <option value="medium" selected>Medium (50%)</option>
+                        <option value="long">Long (75%)</option>
+                      </select>
+                    </div>
+                    <button id="summarizer-btn" class="btn btn--primary mt-8">Summarize Text</button>
+                  </div>
+                  <div id="summarizer-result" class="tool-result hidden">
+                    <h4>Summary</h4>
+                    <div id="summary-text" class="result-content"></div>
+                  </div>
+                </div>
+              </div>
             </div>
-        </div>
-    </div>
+          </div>
 
-    <!-- Footer -->
+          <div class="category-section" data-category="File Tools">
+            <h2 class="category-title">File Tools</h2>
+            <div class="tools-grid">
+              <!-- PDF Converter Suite -->
+              <div class="tool-card" data-tool="pdf-converter">
+                <div class="tool-header">
+                  <h3 class="tool-title">PDF Converter Suite</h3>
+                  <i class="fas fa-file-pdf tool-icon"></i>
+                </div>
+                <div class="tool-content">
+                  <p>Convert, compress, and manipulate PDF files.</p>
+                  <div class="tool-form">
+                    <div class="form-group">
+                      <label for="pdf-operation" class="form-label">Select Operation</label>
+                      <select id="pdf-operation" class="form-control">
+                        <option value="compress">Compress PDF</option>
+                        <option value="merge">Merge PDFs</option>
+                        <option value="split">Split PDF</option>
+                      </select>
+                    </div>
+                    <div id="pdf-upload-container" class="file-upload-container mt-8">
+                      <label for="pdf-upload" class="file-upload-label">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <span id="pdf-upload-text">Choose PDF file(s)</span>
+                      </label>
+                      <input type="file" id="pdf-upload" class="file-upload-input" accept=".pdf" multiple>
+                    </div>
+                    <button id="pdf-process-btn" class="btn btn--primary mt-8">Process PDF</button>
+                  </div>
+                  <div id="pdf-result" class="tool-result hidden">
+                    <h4>Result</h4>
+                    <div id="pdf-result-content" class="result-content"></div>
+                    <a id="pdf-download-link" class="btn btn--secondary mt-8 hidden">Download Result</a>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Smart Image Compressor -->
+              <div class="tool-card" data-tool="image-compressor">
+                <div class="tool-header">
+                  <h3 class="tool-title">Smart Image Compressor</h3>
+                  <i class="fas fa-image tool-icon"></i>
+                </div>
+                <div class="tool-content">
+                  <p>Compress images while maintaining quality.</p>
+                  <div class="tool-form">
+                    <div id="image-upload-container" class="file-upload-container">
+                      <label for="image-upload" class="file-upload-label">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <span>Choose image file</span>
+                      </label>
+                      <input type="file" id="image-upload" class="file-upload-input" accept="image/*">
+                    </div>
+                    <div class="form-group mt-8">
+                      <label for="image-quality" class="form-label">Quality: <span id="quality-value">75%</span></label>
+                      <input type="range" id="image-quality" class="form-range" min="10" max="100" value="75">
+                    </div>
+                    <button id="compress-image-btn" class="btn btn--primary mt-8">Compress Image</button>
+                  </div>
+                  <div id="image-result" class="tool-result hidden">
+                    <div class="flex justify-between items-center">
+                      <h4>Compressed Image</h4>
+                      <div id="compression-info" class="compression-info"></div>
+                    </div>
+                    <div id="image-result-container" class="image-result-container"></div>
+                    <a id="image-download-link" class="btn btn--secondary mt-8 hidden">Download Image</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="category-section" data-category="Writing Tools">
+            <h2 class="category-title">Writing Tools</h2>
+            <div class="tools-grid">
+              <!-- Plagiarism Checker -->
+              <div class="tool-card" data-tool="plagiarism-checker">
+                <div class="tool-header">
+                  <h3 class="tool-title">Plagiarism Checker</h3>
+                  <i class="fas fa-check-double tool-icon"></i>
+                </div>
+                <div class="tool-content">
+                  <p>Check text for potential plagiarism and similarity issues.</p>
+                  <div class="tool-form">
+                    <textarea id="plagiarism-input" class="form-control" placeholder="Paste text to check for plagiarism" rows="5"></textarea>
+                    <button id="plagiarism-btn" class="btn btn--primary mt-8">Check Plagiarism</button>
+                  </div>
+                  <div id="plagiarism-result" class="tool-result hidden">
+                    <div class="result-header">
+                      <h4>Plagiarism Analysis</h4>
+                      <div id="plagiarism-score" class="similarity-score">0% Similar</div>
+                    </div>
+                    <div id="plagiarism-analysis" class="analysis-content"></div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Markdown Editor -->
+              <div class="tool-card" data-tool="markdown-editor">
+                <div class="tool-header">
+                  <h3 class="tool-title">Markdown Editor</h3>
+                  <i class="fas fa-edit tool-icon"></i>
+                </div>
+                <div class="tool-content">
+                  <p>Write in Markdown with live preview.</p>
+                  <div class="markdown-container">
+                    <div class="markdown-editor-container">
+                      <textarea id="markdown-input" class="form-control markdown-textarea" placeholder="Write your Markdown here..."></textarea>
+                    </div>
+                    <div class="markdown-preview-container">
+                      <div id="markdown-preview" class="markdown-preview"></div>
+                    </div>
+                  </div>
+                  <button id="copy-markdown-btn" class="btn btn--secondary mt-8">Copy HTML</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="category-section" data-category="Design Tools">
+            <h2 class="category-title">Design Tools</h2>
+            <div class="tools-grid">
+              <!-- Color Palette Generator -->
+              <div class="tool-card" data-tool="color-palette">
+                <div class="tool-header">
+                  <h3 class="tool-title">Color Palette Generator</h3>
+                  <i class="fas fa-palette tool-icon"></i>
+                </div>
+                <div class="tool-content">
+                  <p>Generate harmonious color palettes or extract colors from images.</p>
+                  <div class="tool-form">
+                    <div class="form-group">
+                      <label for="palette-type" class="form-label">Palette Type</label>
+                      <select id="palette-type" class="form-control">
+                        <option value="random">Random Palette</option>
+                        <option value="monochromatic">Monochromatic</option>
+                        <option value="analogous">Analogous</option>
+                        <option value="complementary">Complementary</option>
+                        <option value="triadic">Triadic</option>
+                        <option value="image">Extract from Image</option>
+                      </select>
+                    </div>
+                    <div id="base-color-container" class="form-group mt-8">
+                      <label for="base-color" class="form-label">Base Color</label>
+                      <input type="color" id="base-color" class="color-picker" value="#4169E1">
+                    </div>
+                    <div id="palette-image-container" class="file-upload-container mt-8 hidden">
+                      <label for="palette-image" class="file-upload-label">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <span>Choose image</span>
+                      </label>
+                      <input type="file" id="palette-image" class="file-upload-input" accept="image/*">
+                    </div>
+                    <button id="generate-palette-btn" class="btn btn--primary mt-8">Generate Palette</button>
+                  </div>
+                  <div id="palette-result" class="tool-result hidden">
+                    <h4>Color Palette</h4>
+                    <div id="color-palette-display" class="color-palette-display"></div>
+                    <button id="copy-palette-btn" class="btn btn--secondary mt-8">Copy Colors</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="category-section" data-category="Security Tools">
+            <h2 class="category-title">Security Tools</h2>
+            <div class="tools-grid">
+              <!-- Password Generator -->
+              <div class="tool-card" data-tool="password-generator">
+                <div class="tool-header">
+                  <h3 class="tool-title">Password Generator</h3>
+                  <i class="fas fa-key tool-icon"></i>
+                </div>
+                <div class="tool-content">
+                  <p>Generate secure, customizable passwords.</p>
+                  <div class="tool-form">
+                    <div class="form-group">
+                      <label for="password-length" class="form-label">Length: <span id="length-value">16</span> characters</label>
+                      <input type="range" id="password-length" class="form-range" min="8" max="32" value="16">
+                    </div>
+                    <div class="options-group">
+                      <div class="form-check">
+                        <input type="checkbox" id="include-uppercase" class="form-check-input" checked>
+                        <label for="include-uppercase" class="form-check-label">Include Uppercase</label>
+                      </div>
+                      <div class="form-check">
+                        <input type="checkbox" id="include-lowercase" class="form-check-input" checked>
+                        <label for="include-lowercase" class="form-check-label">Include Lowercase</label>
+                      </div>
+                      <div class="form-check">
+                        <input type="checkbox" id="include-numbers" class="form-check-input" checked>
+                        <label for="include-numbers" class="form-check-label">Include Numbers</label>
+                      </div>
+                      <div class="form-check">
+                        <input type="checkbox" id="include-symbols" class="form-check-input" checked>
+                        <label for="include-symbols" class="form-check-label">Include Symbols</label>
+                      </div>
+                    </div>
+                    <button id="generate-password-btn" class="btn btn--primary mt-8">Generate Password</button>
+                  </div>
+                  <div id="password-result" class="tool-result hidden">
+                    <div class="password-display-container">
+                      <input type="text" id="password-display" class="form-control password-display" readonly>
+                      <button id="copy-password-btn" class="btn btn--secondary btn--sm password-copy-btn" aria-label="Copy password">
+                        <i class="fas fa-copy"></i>
+                      </button>
+                    </div>
+                    <div id="password-strength" class="password-strength mt-8">
+                      <div class="strength-meter">
+                        <div id="strength-bar" class="strength-bar"></div>
+                      </div>
+                      <span id="strength-text" class="strength-text">Strong</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
     <footer class="footer">
-        <div class="container">
-            <div class="footer__content">
-                <div class="footer__section">
-                    <h4>ToolHub Master</h4>
-                    <p>Your ultimate productivity suite with 8 powerful tools in one place.</p>
-                    <p>© 2025 Aaryan Raj. All rights reserved.</p>
-                </div>
-                
-                <div class="footer__section">
-                    <h4>Quick Links</h4>
-                    <a href="#" id="privacyPolicyFooterLink">Privacy Policy</a>
-                    <a href="#" id="termsOfServiceFooterLink">Terms of Service</a>
-                    <a href="mailto:aaryanraj269@gmail.com">Support</a>
-                </div>
-                
-                <div class="footer__section">
-                    <h4>Connect</h4>
-                    <a href="mailto:aaryanraj269@gmail.com">aaryanraj269@gmail.com</a>
-                    <a href="https://www.linkedin.com/in/aaryan-raj/" target="_blank">LinkedIn Profile</a>
-                </div>
-                
-                <div class="footer__section">
-                    <h4>Tools</h4>
-                    <p>AI Content Detector</p>
-                    <p>PDF Converter Suite</p>
-                    <p>Plagiarism Checker</p>
-                    <p>Text Summarizer</p>
-                    <p>Smart Image Compressor</p>
-                    <p>Color Palette Generator</p>
-                    <p>Password Generator</p>
-                    <p>Markdown Editor</p>
-                </div>
+      <div class="container">
+        <div class="footer-content">
+          <div class="footer-left">
+            <p class="copyright">&copy; 2025 Aaryan Raj</p>
+            <div class="footer-links">
+              <a href="#" class="footer-link">Privacy Policy</a>
+              <a href="#" class="footer-link">Terms of Service</a>
             </div>
+          </div>
+          <div class="footer-right">
+            <div class="contact-info">
+              <a href="mailto:aaryanraj269@gmail.com" class="contact-link">
+                <i class="fas fa-envelope"></i> aaryanraj269@gmail.com
+              </a>
+              <a href="https://www.linkedin.com/in/aaryan-raj/" target="_blank" class="contact-link">
+                <i class="fab fa-linkedin"></i> LinkedIn
+              </a>
+            </div>
+          </div>
         </div>
+      </div>
     </footer>
+  </div>
 
-    <!-- Toast Container -->
-    <div class="toast-container" id="toastContainer"></div>
-
-    <!-- Google Sign-In -->
-    <div id="g_id_onload"
-         data-client_id="YOUR_GOOGLE_CLIENT_ID"
-         data-context="signin"
-         data-ux_mode="popup"
-         data-callback="handleGoogleSignIn"
-         data-auto_prompt="false">
+  <!-- Email Verification Modal -->
+  <div id="email-modal" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-container">
+      <div class="modal-header">
+        <h2 class="modal-title">Email Verification</h2>
+        <button id="close-modal" class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="email-step" class="verification-step">
+          <p>Verify your email to get +10 additional daily uses (25 total).</p>
+          <div class="form-group">
+            <label for="email-input" class="form-label">Email Address</label>
+            <input type="email" id="email-input" class="form-control" placeholder="Enter your email">
+            <p id="email-error" class="error-message hidden"></p>
+          </div>
+          <button id="send-otp-btn" class="btn btn--primary">Send OTP</button>
+        </div>
+        <div id="otp-step" class="verification-step hidden">
+          <p>A 6-digit OTP has been sent to your email. Please enter it below.</p>
+          <div class="otp-container">
+            <input type="text" class="otp-input" maxlength="1" data-index="0">
+            <input type="text" class="otp-input" maxlength="1" data-index="1">
+            <input type="text" class="otp-input" maxlength="1" data-index="2">
+            <input type="text" class="otp-input" maxlength="1" data-index="3">
+            <input type="text" class="otp-input" maxlength="1" data-index="4">
+            <input type="text" class="otp-input" maxlength="1" data-index="5">
+          </div>
+          <p id="otp-error" class="error-message hidden"></p>
+          <p id="otp-timer" class="resend-timer">Resend OTP in <span id="timer-count">60</span>s</p>
+          <button id="verify-otp-btn" class="btn btn--primary">Verify OTP</button>
+          <button id="resend-otp-btn" class="btn btn--secondary hidden">Resend OTP</button>
+        </div>
+        <div id="success-step" class="verification-step hidden">
+          <div class="success-icon">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <h3>Verification Successful!</h3>
+          <p>Your email has been verified. You now have 25 daily uses.</p>
+          <button id="continue-btn" class="btn btn--primary">Continue</button>
+        </div>
+      </div>
     </div>
+  </div>
 
-    <script src="app.js"></script>
+  <!-- Loading Spinner -->
+  <div id="loading-spinner" class="loading-spinner hidden">
+    <div class="spinner"></div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>

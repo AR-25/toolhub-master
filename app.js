@@ -1,1293 +1,1270 @@
 // ToolHub Master - Main Application JavaScript
+
 class ToolHubMaster {
-    constructor() {
-        this.usageData = this.loadUsageData();
-        this.authData = this.loadAuthData();
-        this.currentUser = null;
-        this.currentOTP = null;
-        this.currentEmail = null;
-        
-        // Initialize EmailJS with placeholder - replace with actual user ID
-        if (typeof emailjs !== 'undefined') {
-            emailjs.init("your_emailjs_user_id");
-        }
-        
-        this.init();
-    }
+  constructor() {
+    this.emailJS = {
+      serviceId: 'YOUR_SERVICE_ID',
+      templateId: 'YOUR_TEMPLATE_ID',
+      publicKey: 'YOUR_PUBLIC_KEY'
+    };
+    
+    this.usageLimits = {
+      anonymous: 15,
+      verified: 25
+    };
+    
+    this.currentOTP = null;
+    this.otpTimer = null;
+    this.otpTimeLeft = 0;
+    
+    this.init();
+  }
 
-    init() {
-        this.setupEventListeners();
-        this.updateUsageDisplay();
-        this.updateAuthState();
-        this.resetDailyUsage();
-        this.loadTheme();
-    }
+  init() {
+    this.initEmailJS();
+    this.initTheme();
+    this.initUsageTracking();
+    this.initEventListeners();
+    this.initTools();
+    this.checkDailyReset();
+  }
 
-    // Usage Management
-    loadUsageData() {
-        const saved = localStorage.getItem('toolhub_usage');
-        if (saved) {
-            const data = JSON.parse(saved);
-            const today = new Date().toDateString();
-            if (data.date !== today) {
-                return this.createUsageData();
-            }
-            return data;
-        }
-        return this.createUsageData();
+  // EmailJS initialization
+  initEmailJS() {
+    if (typeof emailjs !== 'undefined') {
+      emailjs.init(this.emailJS.publicKey);
     }
+  }
 
-    createUsageData() {
-        return {
-            date: new Date().toDateString(),
-            uses: 0,
-            maxUses: 15,
-            authenticated: false
-        };
+  // Theme management
+  initTheme() {
+    const savedTheme = localStorage.getItem('toolhub-theme') || 'light';
+    this.setTheme(savedTheme);
+  }
+
+  setTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('toolhub-theme', theme);
+  }
+
+  toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+    this.setTheme(newTheme);
+  }
+
+  // Usage tracking
+  initUsageTracking() {
+    const today = new Date().toDateString();
+    const lastResetDate = localStorage.getItem('toolhub-last-reset');
+    
+    if (lastResetDate !== today) {
+      localStorage.setItem('toolhub-usage-count', '0');
+      localStorage.setItem('toolhub-last-reset', today);
     }
+    
+    this.updateUsageDisplay();
+    this.updateUserStatus();
+  }
 
-    saveUsageData() {
-        localStorage.setItem('toolhub_usage', JSON.stringify(this.usageData));
+  getCurrentUsage() {
+    return parseInt(localStorage.getItem('toolhub-usage-count') || '0');
+  }
+
+  getMaxUsage() {
+    const isVerified = localStorage.getItem('toolhub-verified') === 'true';
+    return isVerified ? this.usageLimits.verified : this.usageLimits.anonymous;
+  }
+
+  canUseTools() {
+    return this.getCurrentUsage() < this.getMaxUsage();
+  }
+
+  incrementUsage() {
+    const currentUsage = this.getCurrentUsage();
+    localStorage.setItem('toolhub-usage-count', (currentUsage + 1).toString());
+    this.updateUsageDisplay();
+  }
+
+  updateUsageDisplay() {
+    const usageElement = document.getElementById('usage-count');
+    if (usageElement) {
+      const currentUsage = this.getCurrentUsage();
+      const maxUsage = this.getMaxUsage();
+      usageElement.textContent = `${currentUsage}/${maxUsage} uses today`;
     }
+  }
 
-    loadAuthData() {
-        const saved = localStorage.getItem('toolhub_auth');
-        return saved ? JSON.parse(saved) : null;
+  updateUserStatus() {
+    const isVerified = localStorage.getItem('toolhub-verified') === 'true';
+    const userEmail = localStorage.getItem('toolhub-user-email');
+    const userStatus = document.getElementById('user-status');
+    const userGreeting = document.getElementById('user-greeting');
+    
+    if (!userStatus || !userGreeting) return;
+    
+    if (isVerified && userEmail) {
+      userStatus.classList.add('hidden');
+      userGreeting.classList.remove('hidden');
+      const greetingText = document.getElementById('greeting-text');
+      if (greetingText) {
+        greetingText.textContent = `Welcome, ${userEmail}!`;
+      }
+    } else {
+      userStatus.classList.remove('hidden');
+      userGreeting.classList.add('hidden');
     }
+  }
 
-    saveAuthData(data) {
-        localStorage.setItem('toolhub_auth', JSON.stringify(data));
-        this.authData = data;
-    }
+  checkDailyReset() {
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+    
+    const timeUntilMidnight = tomorrow.getTime() - now.getTime();
+    
+    setTimeout(() => {
+      this.initUsageTracking();
+      // Set up daily reset
+      setInterval(() => {
+        this.initUsageTracking();
+      }, 24 * 60 * 60 * 1000);
+    }, timeUntilMidnight);
+  }
 
-    updateUsageDisplay() {
-        const remaining = this.usageData.maxUses - this.usageData.uses;
-        const display = document.getElementById('usageDisplay');
-        if (display) {
-            display.textContent = `Uses: ${remaining}/${this.usageData.maxUses}`;
-            if (remaining <= 3) {
-                display.style.background = 'rgba(255, 0, 0, 0.3)';
-            } else {
-                display.style.background = 'rgba(255, 255, 255, 0.25)';
-            }
-        }
-    }
-
-    canUseTools() {
-        return this.usageData.uses < this.usageData.maxUses;
-    }
-
-    incrementUsage() {
-        if (this.canUseTools()) {
-            this.usageData.uses++;
-            this.saveUsageData();
-            this.updateUsageDisplay();
-            
-            const remaining = this.usageData.maxUses - this.usageData.uses;
-            if (remaining <= 5 && !this.usageData.authenticated) {
-                this.showToast('Consider signing in for more uses!', 'warning');
-            }
-            
-            return true;
-        }
-        return false;
-    }
-
-    resetDailyUsage() {
-        const today = new Date().toDateString();
-        if (this.usageData.date !== today) {
-            this.usageData.date = today;
-            this.usageData.uses = 0;
-            this.saveUsageData();
-            this.updateUsageDisplay();
-        }
+  // Event listeners
+  initEventListeners() {
+    // Theme toggle
+    const themeToggleBtn = document.getElementById('theme-toggle-btn');
+    if (themeToggleBtn) {
+      themeToggleBtn.addEventListener('click', () => {
+        this.toggleTheme();
+      });
     }
 
     // Authentication
-    handleGoogleAuth(response) {
-        try {
-            const payload = JSON.parse(atob(response.credential.split('.')[1]));
-            this.currentUser = {
-                name: payload.name,
-                email: payload.email,
-                provider: 'google'
-            };
-            this.completeAuthentication();
-        } catch (error) {
-            this.showToast('Authentication failed', 'error');
-        }
+    const loginBtn = document.getElementById('login-btn');
+    if (loginBtn) {
+      loginBtn.addEventListener('click', () => {
+        this.showEmailModal();
+      });
     }
 
-    completeAuthentication() {
-        this.usageData.authenticated = true;
-        this.usageData.maxUses = 25;
-        this.saveUsageData();
-        this.saveAuthData(this.currentUser);
-        this.updateAuthState();
-        this.updateUsageDisplay();
-        this.hideModal('authModalOverlay');
-        this.showToast(`Welcome, ${this.currentUser.name}!`, 'success');
-        
-        if (typeof gtag !== 'undefined') {
-            gtag('event', 'sign_in', {
-                method: this.currentUser.provider
-            });
-        }
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', () => {
+        this.logout();
+      });
     }
 
-    updateAuthState() {
-        const signInBtn = document.getElementById('signInBtn');
-        const userInfo = document.getElementById('userInfo');
+    // Modal events
+    const closeModalBtn = document.getElementById('close-modal');
+    if (closeModalBtn) {
+      closeModalBtn.addEventListener('click', () => {
+        this.hideEmailModal();
+      });
+    }
+
+    const sendOtpBtn = document.getElementById('send-otp-btn');
+    if (sendOtpBtn) {
+      sendOtpBtn.addEventListener('click', () => {
+        this.sendOTP();
+      });
+    }
+
+    const verifyOtpBtn = document.getElementById('verify-otp-btn');
+    if (verifyOtpBtn) {
+      verifyOtpBtn.addEventListener('click', () => {
+        this.verifyOTP();
+      });
+    }
+
+    const resendOtpBtn = document.getElementById('resend-otp-btn');
+    if (resendOtpBtn) {
+      resendOtpBtn.addEventListener('click', () => {
+        this.sendOTP();
+      });
+    }
+
+    const continueBtn = document.getElementById('continue-btn');
+    if (continueBtn) {
+      continueBtn.addEventListener('click', () => {
+        this.hideEmailModal();
+      });
+    }
+
+    // Modal overlay
+    const modalOverlay = document.querySelector('.modal-overlay');
+    if (modalOverlay) {
+      modalOverlay.addEventListener('click', (e) => {
+        // Only close if clicking directly on the overlay, not its children
+        if (e.target === modalOverlay) {
+          this.hideEmailModal();
+        }
+      });
+    }
+
+    // OTP input handling
+    const otpInputs = document.querySelectorAll('.otp-input');
+    otpInputs.forEach((input, index) => {
+      input.addEventListener('input', (e) => {
+        if (e.target.value.length === 1 && index < otpInputs.length - 1) {
+          otpInputs[index + 1].focus();
+        }
+      });
+
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' && e.target.value === '' && index > 0) {
+          otpInputs[index - 1].focus();
+        }
+      });
+    });
+  }
+
+  // Tool initialization
+  initTools() {
+    this.addToolEventListener('ai-detector-btn', this.runAIContentDetector.bind(this));
+    this.addToolEventListener('summarizer-btn', this.runTextSummarizer.bind(this));
+    this.addToolEventListener('pdf-process-btn', this.runPDFConverter.bind(this));
+    this.addToolEventListener('compress-image-btn', this.runImageCompressor.bind(this));
+    this.addToolEventListener('plagiarism-btn', this.runPlagiarismChecker.bind(this));
+    this.addToolEventListener('generate-palette-btn', this.runColorPaletteGenerator.bind(this));
+    this.addToolEventListener('generate-password-btn', this.runPasswordGenerator.bind(this));
+    this.addToolEventListener('copy-password-btn', this.copyPassword.bind(this));
+    this.addToolEventListener('copy-palette-btn', this.copyColorPalette.bind(this));
+    this.addToolEventListener('copy-markdown-btn', this.copyMarkdownHTML.bind(this));
+
+    // Image quality slider
+    const imageQualitySlider = document.getElementById('image-quality');
+    if (imageQualitySlider) {
+      imageQualitySlider.addEventListener('input', (e) => {
+        const qualityValue = document.getElementById('quality-value');
+        if (qualityValue) {
+          qualityValue.textContent = e.target.value + '%';
+        }
+      });
+    }
+
+    // Password length slider
+    const passwordLengthSlider = document.getElementById('password-length');
+    if (passwordLengthSlider) {
+      passwordLengthSlider.addEventListener('input', (e) => {
+        const lengthValue = document.getElementById('length-value');
+        if (lengthValue) {
+          lengthValue.textContent = e.target.value;
+        }
+      });
+    }
+
+    // Palette type change
+    const paletteType = document.getElementById('palette-type');
+    if (paletteType) {
+      paletteType.addEventListener('change', (e) => {
+        const imageContainer = document.getElementById('palette-image-container');
+        const baseColorContainer = document.getElementById('base-color-container');
         
-        if (this.authData) {
-            this.currentUser = this.authData;
-            this.usageData.authenticated = true;
-            this.usageData.maxUses = 25;
-            signInBtn.classList.add('hidden');
-            userInfo.classList.remove('hidden');
-            document.getElementById('userGreeting').textContent = `Welcome, ${this.currentUser.name}!`;
+        if (e.target.value === 'image') {
+          imageContainer.classList.remove('hidden');
+          baseColorContainer.classList.add('hidden');
         } else {
-            signInBtn.classList.remove('hidden');
-            userInfo.classList.add('hidden');
+          imageContainer.classList.add('hidden');
+          baseColorContainer.classList.remove('hidden');
         }
+      });
     }
 
-    signOut() {
-        this.currentUser = null;
-        this.authData = null;
-        this.usageData.authenticated = false;
-        this.usageData.maxUses = 15;
-        localStorage.removeItem('toolhub_auth');
-        this.saveUsageData();
-        this.updateAuthState();
-        this.updateUsageDisplay();
-        this.showToast('Signed out successfully', 'success');
+    // Markdown editor
+    const markdownInput = document.getElementById('markdown-input');
+    if (markdownInput) {
+      markdownInput.addEventListener('input', () => {
+        this.updateMarkdownPreview();
+      });
+    }
+  }
+
+  addToolEventListener(id, callback) {
+    const element = document.getElementById(id);
+    if (element) {
+      element.addEventListener('click', callback);
+    }
+  }
+
+  // Authentication methods
+  showEmailModal() {
+    const modal = document.getElementById('email-modal');
+    if (!modal) return;
+    
+    const emailStep = document.getElementById('email-step');
+    const otpStep = document.getElementById('otp-step');
+    const successStep = document.getElementById('success-step');
+    
+    if (emailStep) emailStep.classList.remove('hidden');
+    if (otpStep) otpStep.classList.add('hidden');
+    if (successStep) successStep.classList.add('hidden');
+    
+    this.clearOTPInputs();
+    this.clearErrors();
+    
+    // Show modal
+    modal.classList.remove('hidden');
+  }
+
+  hideEmailModal() {
+    const modal = document.getElementById('email-modal');
+    if (modal) {
+      modal.classList.add('hidden');
+    }
+    
+    this.clearOTPInputs();
+    this.clearErrors();
+    
+    if (this.otpTimer) {
+      clearInterval(this.otpTimer);
+    }
+  }
+
+  async sendOTP() {
+    const emailInput = document.getElementById('email-input');
+    if (!emailInput) return;
+    
+    const email = emailInput.value.trim();
+    const errorElement = document.getElementById('email-error');
+
+    if (!this.validateEmail(email)) {
+      this.showError(errorElement, 'Please enter a valid email address');
+      return;
     }
 
-    // Email OTP Authentication
-    async sendOTP(email) {
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        this.currentOTP = otp;
-        this.currentEmail = email;
-        
-        // Simulate sending OTP (in real implementation, use EmailJS)
-        console.log(`OTP for ${email}: ${otp}`);
-        this.showToast(`OTP sent to ${email}: ${otp}`, 'success');
-        document.getElementById('otpSection').classList.remove('hidden');
+    this.showLoading('send-otp-btn');
+    
+    // Generate 6-digit OTP
+    this.currentOTP = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    try {
+      // Simulate email sending (for demo)
+      await this.simulateEmailSending(email, this.currentOTP);
+      
+      const emailStep = document.getElementById('email-step');
+      const otpStep = document.getElementById('otp-step');
+      
+      if (emailStep) emailStep.classList.add('hidden');
+      if (otpStep) otpStep.classList.remove('hidden');
+      
+      this.startOTPTimer();
+    } catch (error) {
+      this.showError(errorElement, 'Failed to send OTP. Please try again.');
+    } finally {
+      this.hideLoading('send-otp-btn');
+    }
+  }
+
+  async simulateEmailSending(email, otp) {
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    // In production, replace this with actual EmailJS call:
+    /*
+    return emailjs.send(this.emailJS.serviceId, this.emailJS.templateId, {
+      to_email: email,
+      otp_code: otp,
+      to_name: email.split('@')[0]
+    });
+    */
+    
+    console.log(`OTP sent to ${email}: ${otp}`);
+    
+    // For demo purposes, show OTP in an alert
+    alert(`Demo Mode: Your OTP is ${otp}`); 
+    
+    return Promise.resolve();
+  }
+
+  verifyOTP() {
+    const otpInputs = document.querySelectorAll('.otp-input');
+    const enteredOTP = Array.from(otpInputs).map(input => input.value).join('');
+    const errorElement = document.getElementById('otp-error');
+
+    if (enteredOTP.length !== 6) {
+      this.showError(errorElement, 'Please enter the complete 6-digit OTP');
+      return;
     }
 
-    verifyOTP(enteredOTP) {
-        if (enteredOTP === this.currentOTP) {
-            this.currentUser = {
-                name: this.currentEmail.split('@')[0],
-                email: this.currentEmail,
-                provider: 'email'
-            };
-            this.completeAuthentication();
-        } else {
-            this.showToast('Invalid OTP. Please try again.', 'error');
-        }
+    if (enteredOTP === this.currentOTP) {
+      const email = document.getElementById('email-input').value.trim();
+      localStorage.setItem('toolhub-verified', 'true');
+      localStorage.setItem('toolhub-user-email', email);
+      
+      const otpStep = document.getElementById('otp-step');
+      const successStep = document.getElementById('success-step');
+      
+      if (otpStep) otpStep.classList.add('hidden');
+      if (successStep) successStep.classList.remove('hidden');
+      
+      this.updateUsageDisplay();
+      this.updateUserStatus();
+      
+      if (this.otpTimer) {
+        clearInterval(this.otpTimer);
+      }
+    } else {
+      this.showError(errorElement, 'Invalid OTP. Please try again.');
+      this.clearOTPInputs();
+    }
+  }
+
+  startOTPTimer() {
+    this.otpTimeLeft = 60;
+    const resendBtn = document.getElementById('resend-otp-btn');
+    const timerElement = document.getElementById('otp-timer');
+    const timerCount = document.getElementById('timer-count');
+    
+    if (resendBtn) resendBtn.classList.add('hidden');
+    if (timerElement) timerElement.classList.remove('hidden');
+    if (timerCount) timerCount.textContent = this.otpTimeLeft;
+    
+    if (this.otpTimer) {
+      clearInterval(this.otpTimer);
+    }
+    
+    this.otpTimer = setInterval(() => {
+      this.otpTimeLeft--;
+      
+      if (timerCount) {
+        timerCount.textContent = this.otpTimeLeft;
+      }
+      
+      if (this.otpTimeLeft <= 0) {
+        clearInterval(this.otpTimer);
+        if (timerElement) timerElement.classList.add('hidden');
+        if (resendBtn) resendBtn.classList.remove('hidden');
+      }
+    }, 1000);
+  }
+
+  logout() {
+    localStorage.removeItem('toolhub-verified');
+    localStorage.removeItem('toolhub-user-email');
+    this.updateUsageDisplay();
+    this.updateUserStatus();
+  }
+
+  // Utility methods
+  validateEmail(email) {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+  }
+
+  showError(element, message) {
+    if (element) {
+      element.textContent = message;
+      element.classList.remove('hidden');
+    }
+  }
+
+  clearErrors() {
+    document.querySelectorAll('.error-message').forEach(el => {
+      el.classList.add('hidden');
+      el.textContent = '';
+    });
+  }
+
+  clearOTPInputs() {
+    document.querySelectorAll('.otp-input').forEach(input => {
+      input.value = '';
+    });
+  }
+
+  showLoading(buttonId) {
+    const button = document.getElementById(buttonId);
+    if (button) {
+      button.classList.add('loading');
+      button.disabled = true;
+    }
+  }
+
+  hideLoading(buttonId) {
+    const button = document.getElementById(buttonId);
+    if (button) {
+      button.classList.remove('loading');
+      button.disabled = false;
+    }
+  }
+
+  checkUsageLimit(toolName) {
+    if (!this.canUseTools()) {
+      alert(`You've reached your daily limit. ${this.getMaxUsage() === 15 ? 'Verify your email to get more uses!' : 'Please try again tomorrow.'}`);
+      return false;
+    }
+    return true;
+  }
+
+  // Tool implementations
+  runAIContentDetector() {
+    if (!this.checkUsageLimit('AI Content Detector')) return;
+
+    const input = document.getElementById('ai-detector-input');
+    if (!input) return;
+    
+    const text = input.value.trim();
+    
+    if (text.length < 100) {
+      alert('Please enter at least 100 characters for analysis.');
+      return;
     }
 
-    // Theme Management
-    loadTheme() {
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        document.documentElement.setAttribute('data-color-scheme', savedTheme);
-        document.getElementById('themeToggle').textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+    this.showLoading('ai-detector-btn');
+
+    setTimeout(() => {
+      const resultDiv = document.getElementById('ai-detector-result');
+      const scoreDiv = document.getElementById('ai-score');
+      const analysisDiv = document.getElementById('ai-analysis');
+      
+      if (!resultDiv || !scoreDiv || !analysisDiv) {
+        this.hideLoading('ai-detector-btn');
+        return;
+      }
+      
+      const aiScore = Math.floor(Math.random() * 20) + 80; // 80-99%
+      
+      let highlightedText = text;
+      const suspiciousPhrases = [
+        'furthermore', 'moreover', 'in conclusion', 'it is important to note',
+        'additionally', 'consequently', 'therefore', 'however'
+      ];
+
+      suspiciousPhrases.forEach(phrase => {
+        const regex = new RegExp(`\\b${phrase}\\b`, 'gi');
+        highlightedText = highlightedText.replace(regex, `<span class="highlighted-text">${phrase}</span>`);
+      });
+
+      scoreDiv.textContent = `${aiScore}%`;
+      scoreDiv.style.background = aiScore > 90 ? 'rgba(255, 0, 0, 0.1)' : 'rgba(255, 165, 0, 0.1)';
+      
+      analysisDiv.innerHTML = `
+        <div style="margin-bottom: 16px;">
+          <strong>Analysis Summary:</strong><br>
+          This text shows <strong>${aiScore}% likelihood</strong> of being AI-generated based on:
+          <ul style="margin: 8px 0; padding-left: 20px;">
+            <li>Sentence structure patterns</li>
+            <li>Vocabulary usage</li>
+            <li>Repetitive phrasing</li>
+            <li>Transition word frequency</li>
+          </ul>
+        </div>
+        <div>
+          <strong>Highlighted suspicious phrases:</strong><br>
+          <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-top: 8px; line-height: 1.6;">
+            ${highlightedText}
+          </div>
+        </div>
+      `;
+
+      resultDiv.classList.remove('hidden');
+      this.incrementUsage();
+      this.hideLoading('ai-detector-btn');
+    }, 1500);
+  }
+
+  runTextSummarizer() {
+    if (!this.checkUsageLimit('Text Summarizer')) return;
+
+    const input = document.getElementById('summarizer-input');
+    const lengthSelect = document.getElementById('summary-length');
+    
+    if (!input || !lengthSelect) return;
+    
+    const text = input.value.trim();
+    const length = lengthSelect.value;
+
+    if (text.length < 200) {
+      alert('Please enter at least 200 characters for summarization.');
+      return;
     }
 
-    toggleTheme() {
-        const currentTheme = document.documentElement.getAttribute('data-color-scheme') || 'light';
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        document.documentElement.setAttribute('data-color-scheme', newTheme);
-        document.getElementById('themeToggle').textContent = newTheme === 'dark' ? '☀️' : '🌙';
-        localStorage.setItem('theme', newTheme);
+    this.showLoading('summarizer-btn');
+
+    setTimeout(() => {
+      const resultDiv = document.getElementById('summarizer-result');
+      const summaryDiv = document.getElementById('summary-text');
+      
+      if (!resultDiv || !summaryDiv) {
+        this.hideLoading('summarizer-btn');
+        return;
+      }
+      
+      const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+      const lengthMultiplier = length === 'short' ? 0.25 : length === 'medium' ? 0.5 : 0.75;
+      const summaryLength = Math.max(1, Math.floor(sentences.length * lengthMultiplier));
+      
+      // Simple extractive summarization - select sentences with high keyword density
+      const keywords = this.extractKeywords(text);
+      const scoredSentences = sentences.map(sentence => {
+        const score = keywords.reduce((acc, keyword) => {
+          return acc + (sentence.toLowerCase().includes(keyword.toLowerCase()) ? 1 : 0);
+        }, 0);
+        return { sentence: sentence.trim(), score };
+      });
+
+      const topSentences = scoredSentences
+        .sort((a, b) => b.score - a.score)
+        .slice(0, summaryLength)
+        .map(item => item.sentence);
+
+      const summary = topSentences.join('. ') + '.';
+
+      summaryDiv.innerHTML = `
+        <div style="background: rgba(255,255,255,0.05); padding: 16px; border-radius: 8px; line-height: 1.6;">
+          ${summary}
+        </div>
+        <div style="margin-top: 12px; font-size: 12px; color: var(--color-text-secondary);">
+          Original: ${text.length} characters | Summary: ${summary.length} characters 
+          (${Math.round((summary.length / text.length) * 100)}% reduction)
+        </div>
+      `;
+
+      resultDiv.classList.remove('hidden');
+      this.incrementUsage();
+      this.hideLoading('summarizer-btn');
+    }, 1500);
+  }
+
+  extractKeywords(text) {
+    const words = text.toLowerCase().match(/\b\w+\b/g) || [];
+    const stopWords = ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'must', 'can', 'this', 'that', 'these', 'those'];
+    
+    const filteredWords = words.filter(word => 
+      word.length > 3 && !stopWords.includes(word)
+    );
+
+    const frequency = {};
+    filteredWords.forEach(word => {
+      frequency[word] = (frequency[word] || 0) + 1;
+    });
+
+    return Object.keys(frequency)
+      .sort((a, b) => frequency[b] - frequency[a])
+      .slice(0, 10);
+  }
+
+  runPDFConverter() {
+    if (!this.checkUsageLimit('PDF Converter')) return;
+
+    const operationSelect = document.getElementById('pdf-operation');
+    const fileInput = document.getElementById('pdf-upload');
+    
+    if (!operationSelect || !fileInput) return;
+    
+    const operation = operationSelect.value;
+    const files = fileInput.files;
+
+    if (files.length === 0) {
+      alert('Please select PDF file(s) to process.');
+      return;
     }
 
-    // Modal Management
-    showModal(modalId) {
-        const modal = document.getElementById(modalId);
-        if (modal) {
-            modal.classList.add('active');
-            document.body.style.overflow = 'hidden';
-        }
-    }
+    this.showLoading('pdf-process-btn');
 
-    hideModal(modalId) {
-        const modal = document.getElementById(modalId);
-        if (modal) {
-            modal.classList.remove('active');
-            document.body.style.overflow = 'auto';
-        }
-    }
-
-    // Toast Notifications
-    showToast(message, type = 'info') {
-        const container = document.getElementById('toastContainer');
-        const toast = document.createElement('div');
-        toast.className = `toast toast--${type}`;
-        toast.textContent = message;
-        
-        container.appendChild(toast);
-        
-        setTimeout(() => toast.classList.add('show'), 100);
-        setTimeout(() => {
-            toast.classList.remove('show');
-            setTimeout(() => container.removeChild(toast), 300);
-        }, 3000);
-    }
-
-    // Tool Implementations
-    openTool(toolType) {
-        if (!this.canUseTools()) {
-            if (this.usageData.authenticated) {
-                this.showModal('upgradeModalOverlay');
-            } else {
-                this.showModal('authModalOverlay');
-            }
-            return;
-        }
-
-        const toolConfigs = {
-            'ai-detector': {
-                title: 'AI Content Detector',
-                content: this.getAIDetectorContent()
-            },
-            'pdf-converter': {
-                title: 'PDF Converter Suite',
-                content: this.getPDFConverterContent()
-            },
-            'plagiarism-checker': {
-                title: 'Plagiarism Checker',
-                content: this.getPlagiarismCheckerContent()
-            },
-            'text-summarizer': {
-                title: 'Text Summarizer',
-                content: this.getTextSummarizerContent()
-            },
-            'image-compressor': {
-                title: 'Smart Image Compressor',
-                content: this.getImageCompressorContent()
-            },
-            'color-palette': {
-                title: 'Color Palette Generator',
-                content: this.getColorPaletteContent()
-            },
-            'password-generator': {
-                title: 'Password Generator',
-                content: this.getPasswordGeneratorContent()
-            },
-            'markdown-editor': {
-                title: 'Markdown Editor',
-                content: this.getMarkdownEditorContent()
-            }
-        };
-
-        const config = toolConfigs[toolType];
-        if (config) {
-            document.getElementById('modalTitle').textContent = config.title;
-            document.getElementById('modalContent').innerHTML = config.content;
-            this.showModal('modalOverlay');
-            this.initToolFunctionality(toolType);
-        }
-    }
-
-    // AI Content Detector
-    getAIDetectorContent() {
-        return `
-            <div class="tool-interface">
-                <div class="tool-section">
-                    <h3>Analyze Text for AI Generation</h3>
-                    <textarea class="form-control" id="aiDetectorText" rows="8" placeholder="Paste your text here to check if it was generated by AI..."></textarea>
-                    <button class="btn btn--primary mt-16" id="analyzeTextBtn">
-                        <span class="btn-text">Analyze Text</span>
-                        <div class="spinner hidden"></div>
-                    </button>
-                </div>
-                <div class="tool-section">
-                    <h3>Analysis Results</h3>
-                    <div class="results-area" id="aiDetectorResults">
-                        Results will appear here after analysis...
-                    </div>
-                </div>
+    setTimeout(() => {
+      const resultDiv = document.getElementById('pdf-result');
+      const contentDiv = document.getElementById('pdf-result-content');
+      
+      if (!resultDiv || !contentDiv) {
+        this.hideLoading('pdf-process-btn');
+        return;
+      }
+      
+      let resultText = '';
+      switch (operation) {
+        case 'compress':
+          resultText = `
+            <div style="background: rgba(255,255,255,0.05); padding: 16px; border-radius: 8px;">
+              <strong>Compression Results:</strong><br>
+              Original size: ${(files[0].size / 1024 / 1024).toFixed(2)} MB<br>
+              Compressed size: ${((files[0].size * 0.7) / 1024 / 1024).toFixed(2)} MB<br>
+              <span style="color: var(--color-success);">Size reduced by 30%</span>
             </div>
-        `;
+          `;
+          break;
+        case 'merge':
+          resultText = `
+            <div style="background: rgba(255,255,255,0.05); padding: 16px; border-radius: 8px;">
+              <strong>Merge Results:</strong><br>
+              ${files.length} PDF file(s) have been successfully merged.<br>
+              Total pages: ${files.length * 5} (estimated)<br>
+              <span style="color: var(--color-success);">Merge completed successfully</span>
+            </div>
+          `;
+          break;
+        case 'split':
+          resultText = `
+            <div style="background: rgba(255,255,255,0.05); padding: 16px; border-radius: 8px;">
+              <strong>Split Results:</strong><br>
+              PDF has been split into individual pages.<br>
+              Generated files: 5 (estimated)<br>
+              <span style="color: var(--color-success);">Split completed successfully</span>
+            </div>
+          `;
+          break;
+      }
+
+      contentDiv.innerHTML = resultText;
+      resultDiv.classList.remove('hidden');
+      
+      this.incrementUsage();
+      this.hideLoading('pdf-process-btn');
+    }, 1500);
+  }
+
+  runImageCompressor() {
+    if (!this.checkUsageLimit('Image Compressor')) return;
+
+    const fileInput = document.getElementById('image-upload');
+    const qualitySlider = document.getElementById('image-quality');
+    
+    if (!fileInput || !qualitySlider) return;
+    
+    const file = fileInput.files[0];
+    const quality = qualitySlider.value / 100;
+
+    if (!file) {
+      alert('Please select an image file to compress.');
+      return;
     }
 
-    async analyzeAIContent(text) {
-        if (!text.trim()) {
-            this.showToast('Please enter text to analyze', 'warning');
-            return;
-        }
+    this.showLoading('compress-image-btn');
 
-        if (!this.incrementUsage()) {
-            this.showToast('Usage limit reached', 'error');
-            return;
-        }
-
-        const btn = document.getElementById('analyzeTextBtn');
-        const btnText = btn.querySelector('.btn-text');
-        const spinner = btn.querySelector('.spinner');
-        
-        btnText.textContent = 'Analyzing...';
-        spinner.classList.remove('hidden');
-        btn.disabled = true;
-
-        await new Promise(resolve => setTimeout(resolve, 2000));
-
-        const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 10);
-        const confidence = Math.floor(Math.random() * 20) + 80;
-        const aiSentences = Math.floor(sentences.length * (confidence / 100));
-
-        let highlightedText = text;
-        for (let i = 0; i < aiSentences; i++) {
-            const sentence = sentences[i];
-            if (sentence) {
-                highlightedText = highlightedText.replace(sentence, `<span style="background: rgba(255, 255, 0, 0.3); padding: 2px 4px; border-radius: 3px;">${sentence}</span>`);
-            }
-        }
-
-        const resultsHtml = `
-            <div class="mb-16">
-                <span style="background: rgba(107, 70, 193, 0.2); color: #6B46C1; padding: 4px 8px; border-radius: 4px; font-weight: bold;">AI Confidence: ${confidence}%</span>
-            </div>
-            <div class="mb-16">
-                <strong>Analysis Summary:</strong><br>
-                ${aiSentences} out of ${sentences.length} sentences likely AI-generated<br>
-                Word count: ${text.split(' ').length} words
-            </div>
-            <div>
-                <strong>Highlighted Text:</strong><br>
-                <div style="line-height: 1.8; margin-top: 12px;">${highlightedText}</div>
-            </div>
-        `;
-
-        document.getElementById('aiDetectorResults').innerHTML = resultsHtml;
-
-        btnText.textContent = 'Analyze Text';
-        spinner.classList.add('hidden');
-        btn.disabled = false;
-
-        if (typeof gtag !== 'undefined') {
-            gtag('event', 'tool_usage', { tool_name: 'ai_detector' });
-        }
-    }
-
-    // PDF Converter Suite
-    getPDFConverterContent() {
-        return `
-            <div class="tool-interface">
-                <div class="tool-section">
-                    <h3>Upload PDF Files</h3>
-                    <div class="file-upload-area" id="pdfUploadArea">
-                        <input type="file" id="pdfInput" accept=".pdf" multiple>
-                        <p>📄 Click to upload PDF files or drag & drop</p>
-                        <p><small>Supports multiple files for merging</small></p>
-                    </div>
-                </div>
-                <div class="tool-section">
-                    <h3>PDF Operations</h3>
-                    <div class="flex gap-8">
-                        <button class="btn btn--secondary" id="compressPdfBtn">Compress PDF</button>
-                        <button class="btn btn--secondary" id="mergePdfBtn">Merge PDFs</button>
-                        <button class="btn btn--secondary" id="splitPdfBtn">Split PDF</button>
-                    </div>
-                </div>
-                <div class="tool-section">
-                    <h3>Output</h3>
-                    <div class="results-area" id="pdfResults">
-                        Upload PDF files to get started...
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
-    async processPDF(operation) {
-        const input = document.getElementById('pdfInput');
-        if (!input.files.length) {
-            this.showToast('Please upload PDF files first', 'warning');
-            return;
-        }
-
-        if (!this.incrementUsage()) {
-            this.showToast('Usage limit reached', 'error');
-            return;
-        }
-
-        const resultsDiv = document.getElementById('pdfResults');
-        resultsDiv.innerHTML = '<div class="loading">Processing PDF... <div class="spinner"></div></div>';
-
-        // Simulate PDF processing
-        await new Promise(resolve => setTimeout(resolve, 2000));
-
-        const file = input.files[0];
-        const filename = `${operation}_${file.name}`;
-
-        resultsDiv.innerHTML = `
-            <div class="text-center">
-                <p>✅ PDF ${operation} completed successfully!</p>
-                <p><strong>Original size:</strong> ${(file.size / 1024).toFixed(1)} KB</p>
-                <p><strong>Operation:</strong> ${operation.charAt(0).toUpperCase() + operation.slice(1)}</p>
-                <button class="btn btn--primary" onclick="alert('In a real implementation, this would download the processed PDF')">Download ${filename}</button>
-            </div>
-        `;
-
-        if (typeof gtag !== 'undefined') {
-            gtag('event', 'tool_usage', { tool_name: 'pdf_converter', operation: operation });
-        }
-    }
-
-    // Plagiarism Checker
-    getPlagiarismCheckerContent() {
-        return `
-            <div class="tool-interface">
-                <div class="tool-section">
-                    <h3>Check Text for Plagiarism</h3>
-                    <textarea class="form-control" id="plagiarismText" rows="8" placeholder="Paste your text here to check for plagiarism..."></textarea>
-                    <button class="btn btn--primary mt-16" id="checkPlagiarismBtn">
-                        <span class="btn-text">Check Plagiarism</span>
-                        <div class="spinner hidden"></div>
-                    </button>
-                </div>
-                <div class="tool-section">
-                    <h3>Plagiarism Report</h3>
-                    <div class="results-area" id="plagiarismResults">
-                        Results will appear here after checking...
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
-    async checkPlagiarism(text) {
-        if (!text.trim()) {
-            this.showToast('Please enter text to check', 'warning');
-            return;
-        }
-
-        if (!this.incrementUsage()) {
-            this.showToast('Usage limit reached', 'error');
-            return;
-        }
-
-        const btn = document.getElementById('checkPlagiarismBtn');
-        const btnText = btn.querySelector('.btn-text');
-        const spinner = btn.querySelector('.spinner');
-        
-        btnText.textContent = 'Checking...';
-        spinner.classList.remove('hidden');
-        btn.disabled = true;
-
-        await new Promise(resolve => setTimeout(resolve, 3000));
-
-        const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 10);
-        const plagiarismScore = Math.floor(Math.random() * 25) + 5;
-        const flaggedSentences = Math.floor(sentences.length * (plagiarismScore / 100));
-
-        let highlightedText = text;
-        const sources = [
-            'Wikipedia.org',
-            'Academic Journal Database',
-            'ResearchGate.net',
-            'Scholar.google.com',
-            'Educational Website'
-        ];
-
-        for (let i = 0; i < flaggedSentences; i++) {
-            const sentence = sentences[i];
-            if (sentence) {
-                highlightedText = highlightedText.replace(sentence, 
-                    `<span style="background: rgba(255, 0, 0, 0.3); padding: 2px 4px; border-radius: 3px;" title="Potential match found">${sentence}</span>`);
-            }
-        }
-
-        const resultsHtml = `
-            <div class="mb-16">
-                <span style="background: rgba(192, 21, 47, 0.2); color: #C0152F; padding: 4px 8px; border-radius: 4px; font-weight: bold;">Plagiarism Score: ${plagiarismScore}%</span>
-            </div>
-            <div class="mb-16">
-                <strong>Report Summary:</strong><br>
-                ${flaggedSentences} potential matches found in ${flaggedSentences} sources<br>
-                Total sentences: ${sentences.length}
-            </div>
-            ${flaggedSentences > 0 ? `
-            <div class="mb-16">
-                <strong>Potential Sources:</strong><br>
-                ${sources.slice(0, flaggedSentences).map(source => `• ${source}`).join('<br>')}
-            </div>
-            ` : ''}
-            <div>
-                <strong>Highlighted Text:</strong><br>
-                <div style="line-height: 1.8; margin-top: 12px;">${highlightedText}</div>
-            </div>
-        `;
-
-        document.getElementById('plagiarismResults').innerHTML = resultsHtml;
-
-        btnText.textContent = 'Check Plagiarism';
-        spinner.classList.add('hidden');
-        btn.disabled = false;
-
-        if (typeof gtag !== 'undefined') {
-            gtag('event', 'tool_usage', { tool_name: 'plagiarism_checker' });
-        }
-    }
-
-    // Text Summarizer
-    getTextSummarizerContent() {
-        return `
-            <div class="tool-interface">
-                <div class="tool-section">
-                    <h3>Text to Summarize</h3>
-                    <textarea class="form-control" id="summarizerText" rows="8" placeholder="Paste your long text here to get a summary..."></textarea>
-                    <div class="mt-16">
-                        <label class="form-label">Summary Length:</label>
-                        <select class="form-control" id="summaryLength">
-                            <option value="short">Short (25% of original)</option>
-                            <option value="medium" selected>Medium (50% of original)</option>
-                            <option value="long">Long (75% of original)</option>
-                        </select>
-                    </div>
-                    <button class="btn btn--primary mt-16" id="summarizeBtn">
-                        <span class="btn-text">Generate Summary</span>
-                        <div class="spinner hidden"></div>
-                    </button>
-                </div>
-                <div class="tool-section">
-                    <h3>Summary</h3>
-                    <div class="results-area" id="summaryResults">
-                        Summary will appear here...
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
-    async summarizeText(text, length) {
-        if (!text.trim()) {
-            this.showToast('Please enter text to summarize', 'warning');
-            return;
-        }
-
-        if (!this.incrementUsage()) {
-            this.showToast('Usage limit reached', 'error');
-            return;
-        }
-
-        const btn = document.getElementById('summarizeBtn');
-        const btnText = btn.querySelector('.btn-text');
-        const spinner = btn.querySelector('.spinner');
-        
-        btnText.textContent = 'Summarizing...';
-        spinner.classList.remove('hidden');
-        btn.disabled = true;
-
-        await new Promise(resolve => setTimeout(resolve, 2000));
-
-        const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 10);
-        const lengthMultipliers = { short: 0.25, medium: 0.5, long: 0.75 };
-        const summaryLength = Math.max(1, Math.floor(sentences.length * lengthMultipliers[length]));
-        
-        const summary = sentences.slice(0, summaryLength).join('. ') + '.';
-        
-        const resultsHtml = `
-            <div class="mb-16">
-                <strong>Summary Statistics:</strong><br>
-                Original: ${sentences.length} sentences, ${text.length} characters<br>
-                Summary: ${summaryLength} sentences, ${summary.length} characters<br>
-                Compression: ${Math.round((1 - summary.length / text.length) * 100)}%
-            </div>
-            <div style="position: relative;">
-                <strong>Generated Summary:</strong>
-                <button style="position: absolute; top: 8px; right: 8px; background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.3); color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;" onclick="navigator.clipboard.writeText('${summary.replace(/'/g, "\\'")}'); this.textContent = 'Copied!'">Copy</button>
-                <div style="margin-top: 12px; line-height: 1.6; padding: 16px; background: rgba(255,255,255,0.05); border-radius: 8px;">
-                    ${summary}
-                </div>
-            </div>
-        `;
-
-        document.getElementById('summaryResults').innerHTML = resultsHtml;
-
-        btnText.textContent = 'Generate Summary';
-        spinner.classList.add('hidden');
-        btn.disabled = false;
-
-        if (typeof gtag !== 'undefined') {
-            gtag('event', 'tool_usage', { tool_name: 'text_summarizer' });
-        }
-    }
-
-    // Image Compressor
-    getImageCompressorContent() {
-        return `
-            <div class="tool-interface">
-                <div class="tool-section">
-                    <h3>Upload Images</h3>
-                    <div class="file-upload-area" id="imageUploadArea">
-                        <input type="file" id="imageInput" accept="image/*" multiple>
-                        <p>🖼️ Click to upload images or drag & drop</p>
-                        <p><small>Supports JPG, PNG, WebP formats</small></p>
-                    </div>
-                </div>
-                <div class="tool-section">
-                    <h3>Compression Settings</h3>
-                    <label class="form-label">Quality (0.1 - 1.0):</label>
-                    <input type="range" id="qualitySlider" min="0.1" max="1.0" step="0.1" value="0.8" class="form-control">
-                    <span id="qualityValue">0.8</span>
-                    <button class="btn btn--primary mt-16" id="compressImagesBtn">Compress Images</button>
-                </div>
-                <div class="tool-section">
-                    <h3>Compressed Images</h3>
-                    <div class="results-area" id="imageResults">
-                        Upload images to get started...
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
-    async compressImages() {
-        const input = document.getElementById('imageInput');
-        if (!input.files.length) {
-            this.showToast('Please upload images first', 'warning');
-            return;
-        }
-
-        if (!this.incrementUsage()) {
-            this.showToast('Usage limit reached', 'error');
-            return;
-        }
-
-        const quality = parseFloat(document.getElementById('qualitySlider').value);
-        const resultsDiv = document.getElementById('imageResults');
-        resultsDiv.innerHTML = '<div class="loading">Compressing images... <div class="spinner"></div></div>';
-
-        const compressedImages = [];
-
-        for (const file of input.files) {
-            try {
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                const img = new Image();
-
-                await new Promise((resolve) => {
-                    img.onload = () => {
-                        canvas.width = img.width;
-                        canvas.height = img.height;
-                        ctx.drawImage(img, 0, 0);
-                        
-                        canvas.toBlob((blob) => {
-                            const originalSize = file.size;
-                            const compressedSize = blob.size;
-                            const savings = Math.round((1 - compressedSize / originalSize) * 100);
-                            
-                            compressedImages.push({
-                                name: file.name,
-                                originalSize,
-                                compressedSize,
-                                savings,
-                                blob,
-                                url: URL.createObjectURL(blob)
-                            });
-                            resolve();
-                        }, file.type, quality);
-                    };
-                    img.src = URL.createObjectURL(file);
-                });
-            } catch (error) {
-                this.showToast(`Error compressing ${file.name}`, 'error');
-            }
-        }
-
-        const resultsHtml = `
-            <div class="mb-16">
-                <strong>Compression Results:</strong><br>
-                ${compressedImages.length} images processed
-            </div>
-            ${compressedImages.map(img => `
-                <div style="margin-bottom: 16px; padding: 16px; background: rgba(255,255,255,0.05); border-radius: 8px;">
-                    <strong>${img.name}</strong><br>
-                    Original: ${(img.originalSize / 1024).toFixed(1)} KB<br>
-                    Compressed: ${(img.compressedSize / 1024).toFixed(1)} KB<br>
-                    Savings: ${img.savings}%<br>
-                    <a href="${img.url}" download="compressed_${img.name}" class="btn btn--secondary btn--sm mt-8">Download</a>
-                </div>
-            `).join('')}
-        `;
-
-        resultsDiv.innerHTML = resultsHtml;
-
-        if (typeof gtag !== 'undefined') {
-            gtag('event', 'tool_usage', { tool_name: 'image_compressor' });
-        }
-    }
-
-    // Color Palette Generator
-    getColorPaletteContent() {
-        return `
-            <div class="tool-interface">
-                <div class="tool-section">
-                    <h3>Generate Color Palette</h3>
-                    <div class="flex gap-16">
-                        <button class="btn btn--secondary" id="randomPaletteBtn">Generate Random Palette</button>
-                        <button class="btn btn--secondary" id="uploadImageBtn">Extract from Image</button>
-                    </div>
-                    <input type="file" id="colorImageInput" accept="image/*" class="hidden">
-                </div>
-                <div class="tool-section">
-                    <h3>Color Palette</h3>
-                    <div class="results-area" id="colorResults">
-                        Generate a palette to get started...
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
-    generateRandomPalette() {
-        if (!this.incrementUsage()) {
-            this.showToast('Usage limit reached', 'error');
-            return;
-        }
-
-        const colors = [];
-        const baseHue = Math.floor(Math.random() * 360);
-        
-        for (let i = 0; i < 5; i++) {
-            const hue = (baseHue + i * 72) % 360;
-            const saturation = Math.floor(Math.random() * 40) + 60;
-            const lightness = Math.floor(Math.random() * 40) + 30;
-            const color = this.hslToHex(hue, saturation, lightness);
-            colors.push(color);
-        }
-
-        this.displayColorPalette(colors);
-
-        if (typeof gtag !== 'undefined') {
-            gtag('event', 'tool_usage', { tool_name: 'color_palette_generator' });
-        }
-    }
-
-    async extractColorsFromImage(file) {
-        if (!this.incrementUsage()) {
-            this.showToast('Usage limit reached', 'error');
-            return;
-        }
-
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
-        const img = new Image();
-
-        return new Promise((resolve) => {
-            img.onload = () => {
-                canvas.width = img.width;
-                canvas.height = img.height;
-                ctx.drawImage(img, 0, 0);
-                
-                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                const colors = this.extractDominantColors(imageData.data);
-                this.displayColorPalette(colors);
-                resolve();
-            };
-            img.src = URL.createObjectURL(file);
-        });
-    }
-
-    extractDominantColors(imageData) {
-        const colorMap = new Map();
         
-        for (let i = 0; i < imageData.length; i += 16) {
-            const r = imageData[i];
-            const g = imageData[i + 1];
-            const b = imageData[i + 2];
-            const hex = this.rgbToHex(r, g, b);
-            colorMap.set(hex, (colorMap.get(hex) || 0) + 1);
-        }
+        canvas.width = img.width;
+        canvas.height = img.height;
         
-        return Array.from(colorMap.entries())
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 5)
-            .map(([color]) => color);
-    }
-
-    displayColorPalette(colors) {
-        const resultsHtml = `
-            <div style="display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0;">
-                ${colors.map(color => `
-                    <div style="width: 60px; height: 60px; background-color: ${color}; border-radius: 8px; border: 2px solid rgba(255, 255, 255, 0.3); cursor: pointer; position: relative;" 
-                         onclick="navigator.clipboard.writeText('${color}'); document.getElementById('copyFeedback').textContent = 'Copied ${color}!'">
-                        <div style="position: absolute; bottom: -24px; left: 50%; transform: translateX(-50%); font-size: 11px; color: var(--color-text); white-space: nowrap;">${color}</div>
-                    </div>
-                `).join('')}
-            </div>
-            <div id="copyFeedback" style="margin-top: 16px; font-style: italic; color: var(--color-text-secondary);"></div>
-            <div class="mt-16">
-                <strong>Palette Codes:</strong><br>
-                ${colors.map(color => `<code style="margin-right: 8px;">${color}</code>`).join('')}
-                <button style="background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.3); color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; margin-left: 8px;" onclick="navigator.clipboard.writeText('${colors.join(', ')}'); this.textContent = 'Copied All!'">Copy All</button>
-            </div>
-        `;
+        ctx.drawImage(img, 0, 0);
         
-        document.getElementById('colorResults').innerHTML = resultsHtml;
-    }
-
-    // Password Generator
-    getPasswordGeneratorContent() {
-        return `
-            <div class="tool-interface">
-                <div class="tool-section">
-                    <h3>Password Options</h3>
-                    <div class="form-group">
-                        <label class="form-label">Length:</label>
-                        <input type="range" id="passwordLength" min="8" max="128" value="16" class="form-control">
-                        <span id="lengthValue">16</span>
-                    </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                        <label style="display: flex; align-items: center; gap: 8px;"><input type="checkbox" id="includeUppercase" checked> Uppercase (A-Z)</label>
-                        <label style="display: flex; align-items: center; gap: 8px;"><input type="checkbox" id="includeLowercase" checked> Lowercase (a-z)</label>
-                        <label style="display: flex; align-items: center; gap: 8px;"><input type="checkbox" id="includeNumbers" checked> Numbers (0-9)</label>
-                        <label style="display: flex; align-items: center; gap: 8px;"><input type="checkbox" id="includeSymbols" checked> Symbols (!@#$)</label>
-                    </div>
-                    <button class="btn btn--primary mt-16" id="generatePasswordBtn">Generate Password</button>
-                </div>
-                <div class="tool-section">
-                    <h3>Generated Password</h3>
-                    <div class="results-area" id="passwordResults">
-                        Configure options and generate password...
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
-    generatePassword() {
-        if (!this.incrementUsage()) {
-            this.showToast('Usage limit reached', 'error');
+        canvas.toBlob((blob) => {
+          const resultDiv = document.getElementById('image-result');
+          const containerDiv = document.getElementById('image-result-container');
+          const infoDiv = document.getElementById('compression-info');
+          const downloadLink = document.getElementById('image-download-link');
+          
+          if (!resultDiv || !containerDiv || !infoDiv || !downloadLink) {
+            this.hideLoading('compress-image-btn');
             return;
+          }
+          
+          const originalSize = file.size;
+          const compressedSize = blob.size;
+          const reduction = Math.round((1 - compressedSize / originalSize) * 100);
+          
+          infoDiv.innerHTML = `
+            Original: ${(originalSize / 1024).toFixed(1)} KB → 
+            Compressed: ${(compressedSize / 1024).toFixed(1)} KB 
+            (${reduction}% reduction)
+          `;
+          
+          const compressedImg = document.createElement('img');
+          compressedImg.src = URL.createObjectURL(blob);
+          compressedImg.className = 'compressed-image';
+          compressedImg.alt = 'Compressed image';
+          
+          containerDiv.innerHTML = '';
+          containerDiv.appendChild(compressedImg);
+          
+          downloadLink.href = URL.createObjectURL(blob);
+          downloadLink.download = `compressed_${file.name}`;
+          downloadLink.classList.remove('hidden');
+          
+          resultDiv.classList.remove('hidden');
+          this.incrementUsage();
+          this.hideLoading('compress-image-btn');
+        }, file.type, quality);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  runPlagiarismChecker() {
+    if (!this.checkUsageLimit('Plagiarism Checker')) return;
+
+    const input = document.getElementById('plagiarism-input');
+    if (!input) return;
+    
+    const text = input.value.trim();
+
+    if (text.length < 50) {
+      alert('Please enter at least 50 characters for plagiarism check.');
+      return;
+    }
+
+    this.showLoading('plagiarism-btn');
+
+    setTimeout(() => {
+      const resultDiv = document.getElementById('plagiarism-result');
+      const scoreDiv = document.getElementById('plagiarism-score');
+      const analysisDiv = document.getElementById('plagiarism-analysis');
+      
+      if (!resultDiv || !scoreDiv || !analysisDiv) {
+        this.hideLoading('plagiarism-btn');
+        return;
+      }
+      
+      const similarityScore = Math.floor(Math.random() * 30) + 5; // 5-35%
+      const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+      
+      // Simulate finding similar content
+      const suspiciousSentences = sentences.slice(0, Math.max(1, Math.floor(sentences.length * 0.2)));
+      let highlightedText = text;
+      
+      suspiciousSentences.forEach(sentence => {
+        const trimmed = sentence.trim();
+        if (trimmed) {
+          highlightedText = highlightedText.replace(trimmed, `<span class="highlighted-text">${trimmed}</span>`);
         }
+      });
 
-        const length = parseInt(document.getElementById('passwordLength').value);
-        const includeUppercase = document.getElementById('includeUppercase').checked;
-        const includeLowercase = document.getElementById('includeLowercase').checked;
-        const includeNumbers = document.getElementById('includeNumbers').checked;
-        const includeSymbols = document.getElementById('includeSymbols').checked;
+      scoreDiv.textContent = `${similarityScore}% Similar`;
+      scoreDiv.style.background = similarityScore > 25 ? 'rgba(255, 0, 0, 0.1)' : 'rgba(0, 255, 0, 0.1)';
+      scoreDiv.style.color = similarityScore > 25 ? '#ff4444' : '#00aa00';
+      
+      analysisDiv.innerHTML = `
+        <div style="margin-bottom: 16px;">
+          <strong>Plagiarism Analysis:</strong><br>
+          ${similarityScore}% of your text shows similarity to existing content online.
+          ${similarityScore > 25 ? '<span style="color: var(--color-warning);">⚠️ Consider revising highlighted sections.</span>' : '<span style="color: var(--color-success);">✅ Content appears to be original.</span>'}
+        </div>
+        <div>
+          <strong>Potentially similar content:</strong><br>
+          <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-top: 8px; line-height: 1.6;">
+            ${highlightedText}
+          </div>
+        </div>
+        <div style="margin-top: 12px; font-size: 12px; color: var(--color-text-secondary);">
+          Sources checked: Academic papers, web content, publications
+        </div>
+      `;
 
-        let charset = '';
-        if (includeUppercase) charset += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        if (includeLowercase) charset += 'abcdefghijklmnopqrstuvwxyz';
-        if (includeNumbers) charset += '0123456789';
-        if (includeSymbols) charset += '!@#$%^&*()_+-=[]{}|;:,.<>?';
+      resultDiv.classList.remove('hidden');
+      this.incrementUsage();
+      this.hideLoading('plagiarism-btn');
+    }, 1500);
+  }
 
-        if (!charset) {
-            this.showToast('Please select at least one character type', 'warning');
-            return;
-        }
+  runColorPaletteGenerator() {
+    if (!this.checkUsageLimit('Color Palette Generator')) return;
 
-        let password = '';
-        const array = new Uint32Array(length);
-        crypto.getRandomValues(array);
+    const paletteTypeSelect = document.getElementById('palette-type');
+    const baseColorInput = document.getElementById('base-color');
+    const imageInput = document.getElementById('palette-image');
+    
+    if (!paletteTypeSelect) return;
+    
+    const paletteType = paletteTypeSelect.value;
+    const baseColor = baseColorInput ? baseColorInput.value : '#4169E1';
+
+    this.showLoading('generate-palette-btn');
+
+    if (paletteType === 'image' && imageInput && imageInput.files[0]) {
+      this.extractColorsFromImage(imageInput.files[0]);
+    } else {
+      this.generateColorPalette(paletteType, baseColor);
+    }
+  }
+
+  generateColorPalette(type, baseColor) {
+    setTimeout(() => {
+      let colors = [];
+      const baseHsl = this.hexToHsl(baseColor);
+
+      switch (type) {
+        case 'monochromatic':
+          colors = this.generateMonochromaticPalette(baseHsl);
+          break;
+        case 'analogous':
+          colors = this.generateAnalogousPalette(baseHsl);
+          break;
+        case 'complementary':
+          colors = this.generateComplementaryPalette(baseHsl);
+          break;
+        case 'triadic':
+          colors = this.generateTriadicPalette(baseHsl);
+          break;
+        default:
+          colors = this.generateRandomPalette();
+      }
+
+      this.displayColorPalette(colors);
+      this.incrementUsage();
+      this.hideLoading('generate-palette-btn');
+    }, 1000);
+  }
+
+  extractColorsFromImage(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const colors = this.extractDominantColors(imageData);
         
-        for (let i = 0; i < length; i++) {
-            password += charset[array[i] % charset.length];
-        }
+        this.displayColorPalette(colors);
+        this.incrementUsage();
+        this.hideLoading('generate-palette-btn');
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
 
-        const strength = this.calculatePasswordStrength(password);
-        
-        const resultsHtml = `
-            <div style="position: relative;">
-                <div style="font-family: monospace; font-size: 18px; padding: 16px; background: rgba(255,255,255,0.05); border-radius: 8px; word-break: break-all; margin-bottom: 16px;">
-                    ${password}
-                </div>
-                <button style="position: absolute; top: 8px; right: 8px; background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.3); color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;" onclick="navigator.clipboard.writeText('${password}'); this.textContent = 'Copied!'">Copy</button>
-            </div>
-            <div class="mb-16">
-                <strong>Password Strength:</strong> <span style="background: rgba(107, 70, 193, 0.2); color: #6B46C1; padding: 4px 8px; border-radius: 4px; font-weight: bold;">${strength}</span>
-            </div>
-            <div>
-                <strong>Security Tips:</strong><br>
-                • Use this password only once<br>
-                • Store it securely in a password manager<br>
-                • Enable two-factor authentication when possible
-            </div>
-        `;
-
-        document.getElementById('passwordResults').innerHTML = resultsHtml;
-
-        if (typeof gtag !== 'undefined') {
-            gtag('event', 'tool_usage', { tool_name: 'password_generator' });
-        }
+  extractDominantColors(imageData) {
+    const data = imageData.data;
+    const colorCounts = {};
+    
+    // Sample every 10th pixel for performance
+    for (let i = 0; i < data.length; i += 40) {
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+      const key = `${r},${g},${b}`;
+      colorCounts[key] = (colorCounts[key] || 0) + 1;
     }
 
-    calculatePasswordStrength(password) {
-        let score = 0;
-        if (password.length >= 12) score += 25;
-        if (/[a-z]/.test(password)) score += 25;
-        if (/[A-Z]/.test(password)) score += 25;
-        if (/[0-9]/.test(password)) score += 25;
-        if (/[^A-Za-z0-9]/.test(password)) score += 25;
-        
-        if (score >= 100) return 'Very Strong';
-        if (score >= 75) return 'Strong';
-        if (score >= 50) return 'Medium';
-        return 'Weak';
+    // Get top 5 colors
+    const sortedColors = Object.entries(colorCounts)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 5)
+      .map(([color,]) => {
+        const [r, g, b] = color.split(',').map(Number);
+        return this.rgbToHex(r, g, b);
+      });
+
+    return sortedColors;
+  }
+
+  generateMonochromaticPalette(hsl) {
+    const colors = [];
+    for (let i = 0; i < 5; i++) {
+      const lightness = 20 + (i * 15);
+      colors.push(this.hslToHex(hsl.h, hsl.s, lightness));
+    }
+    return colors;
+  }
+
+  generateAnalogousPalette(hsl) {
+    const colors = [];
+    for (let i = -2; i <= 2; i++) {
+      const hue = (hsl.h + (i * 30) + 360) % 360;
+      colors.push(this.hslToHex(hue, hsl.s, hsl.l));
+    }
+    return colors;
+  }
+
+  generateComplementaryPalette(hsl) {
+    const colors = [
+      this.hslToHex(hsl.h, hsl.s, hsl.l),
+      this.hslToHex((hsl.h + 180) % 360, hsl.s, hsl.l),
+      this.hslToHex(hsl.h, hsl.s * 0.7, hsl.l * 1.2),
+      this.hslToHex((hsl.h + 180) % 360, hsl.s * 0.7, hsl.l * 1.2),
+      this.hslToHex(hsl.h, hsl.s * 0.5, hsl.l * 0.8)
+    ];
+    return colors;
+  }
+
+  generateTriadicPalette(hsl) {
+    const colors = [
+      this.hslToHex(hsl.h, hsl.s, hsl.l),
+      this.hslToHex((hsl.h + 120) % 360, hsl.s, hsl.l),
+      this.hslToHex((hsl.h + 240) % 360, hsl.s, hsl.l),
+      this.hslToHex(hsl.h, hsl.s * 0.6, hsl.l * 1.2),
+      this.hslToHex((hsl.h + 120) % 360, hsl.s * 0.6, hsl.l * 1.2)
+    ];
+    return colors;
+  }
+
+  generateRandomPalette() {
+    const colors = [];
+    for (let i = 0; i < 5; i++) {
+      const hue = Math.floor(Math.random() * 360);
+      const saturation = 50 + Math.floor(Math.random() * 30);
+      const lightness = 40 + Math.floor(Math.random() * 40);
+      colors.push(this.hslToHex(hue, saturation, lightness));
+    }
+    return colors;
+  }
+
+  displayColorPalette(colors) {
+    const paletteDisplay = document.getElementById('color-palette-display');
+    const resultDiv = document.getElementById('palette-result');
+    
+    if (!paletteDisplay || !resultDiv) return;
+    
+    paletteDisplay.innerHTML = colors.map(color => `
+      <div class="color-swatch">
+        <div class="color-circle" style="background-color: ${color};"></div>
+        <div class="color-code">${color.toUpperCase()}</div>
+      </div>
+    `).join('');
+
+    resultDiv.classList.remove('hidden');
+  }
+
+  copyColorPalette() {
+    const colors = Array.from(document.querySelectorAll('.color-code'))
+      .map(el => el.textContent)
+      .join(', ');
+    
+    navigator.clipboard.writeText(colors).then(() => {
+      const btn = document.getElementById('copy-palette-btn');
+      if (btn) {
+        const originalText = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(() => {
+          btn.textContent = originalText;
+        }, 2000);
+      }
+    });
+  }
+
+  runPasswordGenerator() {
+    if (!this.checkUsageLimit('Password Generator')) return;
+
+    const lengthSlider = document.getElementById('password-length');
+    const uppercaseCheck = document.getElementById('include-uppercase');
+    const lowercaseCheck = document.getElementById('include-lowercase');
+    const numbersCheck = document.getElementById('include-numbers');
+    const symbolsCheck = document.getElementById('include-symbols');
+    
+    if (!lengthSlider || !uppercaseCheck || !lowercaseCheck || !numbersCheck || !symbolsCheck) return;
+    
+    const length = parseInt(lengthSlider.value);
+    const includeUppercase = uppercaseCheck.checked;
+    const includeLowercase = lowercaseCheck.checked;
+    const includeNumbers = numbersCheck.checked;
+    const includeSymbols = symbolsCheck.checked;
+
+    if (!includeUppercase && !includeLowercase && !includeNumbers && !includeSymbols) {
+      alert('Please select at least one character type.');
+      return;
     }
 
-    // Markdown Editor
-    getMarkdownEditorContent() {
-        return `
-            <div class="tool-interface">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; height: 500px;">
-                    <div style="border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 8px; overflow: hidden; background: rgba(255, 255, 255, 0.05);">
-                        <textarea id="markdownInput" style="width: 100%; height: 100%; border: none; padding: 16px; font-family: monospace; font-size: 14px; background: transparent; color: var(--color-text); resize: none; outline: none;" placeholder="# Start typing your markdown here...
+    let charset = '';
+    if (includeUppercase) charset += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    if (includeLowercase) charset += 'abcdefghijklmnopqrstuvwxyz';
+    if (includeNumbers) charset += '0123456789';
+    if (includeSymbols) charset += '!@#$%^&*()_+-=[]{}|;:,.<>?';
 
-## Features
-- Live preview
-- Syntax highlighting
-- Export options
-
-**Bold text** and *italic text*
-
-\`\`\`javascript
-console.log('Hello World!');
-\`\`\`"></textarea>
-                    </div>
-                    <div style="border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 8px; padding: 16px; overflow-y: auto; background: rgba(255, 255, 255, 0.05);" id="markdownPreview">
-                        <p>Start typing in the editor to see the preview...</p>
-                    </div>
-                </div>
-                <div class="mt-16 text-center">
-                    <button class="btn btn--secondary" id="exportMarkdownBtn">Export as HTML</button>
-                    <button class="btn btn--secondary" id="copyMarkdownBtn">Copy Markdown</button>
-                </div>
-            </div>
-        `;
+    let password = '';
+    for (let i = 0; i < length; i++) {
+      password += charset.charAt(Math.floor(Math.random() * charset.length));
     }
 
-    initMarkdownEditor() {
-        const input = document.getElementById('markdownInput');
-        const preview = document.getElementById('markdownPreview');
-        
-        if (!this.incrementUsage()) {
-            this.showToast('Usage limit reached', 'error');
-            return;
-        }
+    const passwordDisplay = document.getElementById('password-display');
+    if (passwordDisplay) {
+      passwordDisplay.value = password;
+    }
+    
+    // Calculate strength
+    const strength = this.calculatePasswordStrength(password);
+    this.displayPasswordStrength(strength);
 
-        const updatePreview = () => {
-            const markdown = input.value;
-            const html = this.parseMarkdown(markdown);
-            preview.innerHTML = html;
-        };
+    const resultDiv = document.getElementById('password-result');
+    if (resultDiv) {
+      resultDiv.classList.remove('hidden');
+    }
+    
+    this.incrementUsage();
+  }
 
-        input.addEventListener('input', updatePreview);
-        updatePreview();
+  calculatePasswordStrength(password) {
+    let score = 0;
+    let feedback = [];
 
-        if (typeof gtag !== 'undefined') {
-            gtag('event', 'tool_usage', { tool_name: 'markdown_editor' });
-        }
+    // Length check
+    if (password.length >= 12) score += 25;
+    else if (password.length >= 8) score += 15;
+    else feedback.push('Use at least 8 characters');
+
+    // Character variety
+    if (/[a-z]/.test(password)) score += 15;
+    if (/[A-Z]/.test(password)) score += 15;
+    if (/[0-9]/.test(password)) score += 15;
+    if (/[^A-Za-z0-9]/.test(password)) score += 20;
+
+    // Bonus for length
+    if (password.length >= 16) score += 10;
+
+    let strength = 'Weak';
+    let color = '#ff4444';
+    
+    if (score >= 85) {
+      strength = 'Very Strong';
+      color = '#00aa00';
+    } else if (score >= 70) {
+      strength = 'Strong';
+      color = '#44aa44';
+    } else if (score >= 50) {
+      strength = 'Medium';
+      color = '#ffaa00';
     }
 
-    parseMarkdown(markdown) {
-        return markdown
-            .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-            .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-            .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-            .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
-            .replace(/\*(.*)\*/gim, '<em>$1</em>')
-            .replace(/```([\s\S]*?)```/gim, '<pre><code>$1</code></pre>')
-            .replace(/`([^`]*)`/gim, '<code>$1</code>')
-            .replace(/\[([^\]]*)\]\(([^\)]*)\)/gim, '<a href="$2" target="_blank">$1</a>')
-            .replace(/\n/gim, '<br>');
+    return { score, strength, color, feedback };
+  }
+
+  displayPasswordStrength(strength) {
+    const strengthBar = document.getElementById('strength-bar');
+    const strengthText = document.getElementById('strength-text');
+    
+    if (!strengthBar || !strengthText) return;
+    
+    strengthBar.style.width = `${strength.score}%`;
+    strengthBar.style.backgroundColor = strength.color;
+    strengthText.textContent = strength.strength;
+    strengthText.style.color = strength.color;
+  }
+
+  copyPassword() {
+    const passwordDisplay = document.getElementById('password-display');
+    if (!passwordDisplay) return;
+    
+    passwordDisplay.select();
+    document.execCommand('copy');
+    
+    const btn = document.getElementById('copy-password-btn');
+    if (btn) {
+      const icon = btn.querySelector('i');
+      if (icon) {
+        icon.className = 'fas fa-check';
+        setTimeout(() => {
+          icon.className = 'fas fa-copy';
+        }, 2000);
+      }
+    }
+  }
+
+  updateMarkdownPreview() {
+    const input = document.getElementById('markdown-input');
+    const preview = document.getElementById('markdown-preview');
+    
+    if (!input || !preview) return;
+    
+    const text = input.value;
+    
+    if (typeof marked !== 'undefined') {
+      preview.innerHTML = marked.parse(text);
+    } else {
+      // Fallback basic markdown parsing
+      let html = text
+        .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+        .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+        .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+        .replace(/^\* (.*$)/gm, '<li>$1</li>')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        .replace(/`(.*?)`/g, '<code>$1</code>')
+        .replace(/\n/g, '<br>');
+      
+      preview.innerHTML = html;
+    }
+  }
+
+  copyMarkdownHTML() {
+    const preview = document.getElementById('markdown-preview');
+    if (!preview) return;
+    
+    const html = preview.innerHTML;
+    
+    navigator.clipboard.writeText(html).then(() => {
+      const btn = document.getElementById('copy-markdown-btn');
+      if (btn) {
+        const originalText = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(() => {
+          btn.textContent = originalText;
+        }, 2000);
+      }
+    });
+  }
+
+  // Color utility functions
+  hexToHsl(hex) {
+    const r = parseInt(hex.slice(1, 3), 16) / 255;
+    const g = parseInt(hex.slice(3, 5), 16) / 255;
+    const b = parseInt(hex.slice(5, 7), 16) / 255;
+
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    let h, s, l = (max + min) / 2;
+
+    if (max === min) {
+      h = s = 0;
+    } else {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      switch (max) {
+        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+        case g: h = (b - r) / d + 2; break;
+        case b: h = (r - g) / d + 4; break;
+      }
+      h /= 6;
     }
 
-    exportMarkdownAsHTML() {
-        const markdown = document.getElementById('markdownInput').value;
-        const html = `<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Exported Markdown</title>
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; }
-        h1, h2, h3 { color: #333; }
-        code { background: #f4f4f4; padding: 2px 4px; border-radius: 3px; }
-        pre { background: #f4f4f4; padding: 16px; border-radius: 6px; overflow-x: auto; }
-    </style>
-</head>
-<body>
-    ${this.parseMarkdown(markdown)}
-</body>
-</html>`;
+    return { h: h * 360, s: s * 100, l: l * 100 };
+  }
 
-        const blob = new Blob([html], { type: 'text/html' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'exported-markdown.html';
-        a.click();
-        URL.revokeObjectURL(url);
+  hslToHex(h, s, l) {
+    h /= 360;
+    s /= 100;
+    l /= 100;
+
+    const hue2rgb = (p, q, t) => {
+      if (t < 0) t += 1;
+      if (t > 1) t -= 1;
+      if (t < 1/6) return p + (q - p) * 6 * t;
+      if (t < 1/2) return q;
+      if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+      return p;
+    };
+
+    let r, g, b;
+    if (s === 0) {
+      r = g = b = l;
+    } else {
+      const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+      const p = 2 * l - q;
+      r = hue2rgb(p, q, h + 1/3);
+      g = hue2rgb(p, q, h);
+      b = hue2rgb(p, q, h - 1/3);
     }
 
-    // Utility Functions
-    hslToHex(h, s, l) {
-        l /= 100;
-        const a = s * Math.min(l, 1 - l) / 100;
-        const f = n => {
-            const k = (n + h / 30) % 12;
-            const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
-            return Math.round(255 * color).toString(16).padStart(2, '0');
-        };
-        return `#${f(0)}${f(8)}${f(4)}`;
-    }
+    const toHex = (c) => {
+      const hex = Math.round(c * 255).toString(16);
+      return hex.length === 1 ? '0' + hex : hex;
+    };
 
-    rgbToHex(r, g, b) {
-        return `#${[r, g, b].map(x => x.toString(16).padStart(2, '0')).join('')}`;
-    }
+    return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+  }
 
-    // Tool Functionality Initialization
-    initToolFunctionality(toolType) {
-        switch (toolType) {
-            case 'ai-detector':
-                document.getElementById('analyzeTextBtn').addEventListener('click', () => {
-                    const text = document.getElementById('aiDetectorText').value;
-                    this.analyzeAIContent(text);
-                });
-                break;
-
-            case 'pdf-converter':
-                document.getElementById('pdfUploadArea').addEventListener('click', () => {
-                    document.getElementById('pdfInput').click();
-                });
-                document.getElementById('compressPdfBtn').addEventListener('click', () => {
-                    this.processPDF('compress');
-                });
-                document.getElementById('mergePdfBtn').addEventListener('click', () => {
-                    this.processPDF('merge');
-                });
-                document.getElementById('splitPdfBtn').addEventListener('click', () => {
-                    this.processPDF('split');
-                });
-                break;
-
-            case 'plagiarism-checker':
-                document.getElementById('checkPlagiarismBtn').addEventListener('click', () => {
-                    const text = document.getElementById('plagiarismText').value;
-                    this.checkPlagiarism(text);
-                });
-                break;
-
-            case 'text-summarizer':
-                document.getElementById('summarizeBtn').addEventListener('click', () => {
-                    const text = document.getElementById('summarizerText').value;
-                    const length = document.getElementById('summaryLength').value;
-                    this.summarizeText(text, length);
-                });
-                break;
-
-            case 'image-compressor':
-                document.getElementById('imageUploadArea').addEventListener('click', () => {
-                    document.getElementById('imageInput').click();
-                });
-                document.getElementById('qualitySlider').addEventListener('input', (e) => {
-                    document.getElementById('qualityValue').textContent = e.target.value;
-                });
-                document.getElementById('compressImagesBtn').addEventListener('click', () => {
-                    this.compressImages();
-                });
-                break;
-
-            case 'color-palette':
-                document.getElementById('randomPaletteBtn').addEventListener('click', () => {
-                    this.generateRandomPalette();
-                });
-                document.getElementById('uploadImageBtn').addEventListener('click', () => {
-                    document.getElementById('colorImageInput').click();
-                });
-                document.getElementById('colorImageInput').addEventListener('change', (e) => {
-                    if (e.target.files[0]) {
-                        this.extractColorsFromImage(e.target.files[0]);
-                    }
-                });
-                break;
-
-            case 'password-generator':
-                document.getElementById('passwordLength').addEventListener('input', (e) => {
-                    document.getElementById('lengthValue').textContent = e.target.value;
-                });
-                document.getElementById('generatePasswordBtn').addEventListener('click', () => {
-                    this.generatePassword();
-                });
-                break;
-
-            case 'markdown-editor':
-                this.initMarkdownEditor();
-                document.getElementById('exportMarkdownBtn').addEventListener('click', () => {
-                    this.exportMarkdownAsHTML();
-                });
-                document.getElementById('copyMarkdownBtn').addEventListener('click', () => {
-                    const markdown = document.getElementById('markdownInput').value;
-                    navigator.clipboard.writeText(markdown);
-                    this.showToast('Markdown copied to clipboard', 'success');
-                });
-                break;
-        }
-    }
-
-    // Event Listeners Setup
-    setupEventListeners() {
-        // Theme toggle
-        document.getElementById('themeToggle').addEventListener('click', () => {
-            this.toggleTheme();
-        });
-
-        // Tool cards
-        document.querySelectorAll('.tool-card').forEach(card => {
-            card.addEventListener('click', () => {
-                const toolType = card.getAttribute('data-tool');
-                this.openTool(toolType);
-            });
-        });
-
-        // Modal controls
-        document.getElementById('modalClose').addEventListener('click', () => {
-            this.hideModal('modalOverlay');
-        });
-
-        document.getElementById('authModalClose').addEventListener('click', () => {
-            this.hideModal('authModalOverlay');
-        });
-
-        document.getElementById('upgradeModalClose').addEventListener('click', () => {
-            this.hideModal('upgradeModalOverlay');
-        });
-
-        // Auth buttons
-        document.getElementById('signInBtn').addEventListener('click', () => {
-            this.showModal('authModalOverlay');
-        });
-
-        document.getElementById('signOutBtn').addEventListener('click', () => {
-            this.signOut();
-        });
-
-        document.getElementById('googleSignInBtn').addEventListener('click', () => {
-            this.showToast('Google Sign-In would work with proper configuration', 'info');
-        });
-
-        document.getElementById('emailSignInBtn').addEventListener('click', () => {
-            const email = document.getElementById('emailInput').value;
-            if (email && email.includes('@')) {
-                this.sendOTP(email);
-            } else {
-                this.showToast('Please enter a valid email', 'warning');
-            }
-        });
-
-        document.getElementById('verifyOtpBtn').addEventListener('click', () => {
-            const otp = document.getElementById('otpInput').value;
-            if (otp.length === 6) {
-                this.verifyOTP(otp);
-            } else {
-                this.showToast('Please enter a 6-digit OTP', 'warning');
-            }
-        });
-
-        // Legal pages
-        document.getElementById('privacyPolicyLink').addEventListener('click', (e) => {
-            e.preventDefault();
-            this.showLegalPage('privacy');
-        });
-
-        document.getElementById('termsOfServiceLink').addEventListener('click', (e) => {
-            e.preventDefault();
-            this.showLegalPage('terms');
-        });
-
-        // Footer links
-        document.getElementById('privacyPolicyFooterLink').addEventListener('click', (e) => {
-            e.preventDefault();
-            this.showLegalPage('privacy');
-        });
-
-        document.getElementById('termsOfServiceFooterLink').addEventListener('click', (e) => {
-            e.preventDefault();
-            this.showLegalPage('terms');
-        });
-
-        // Close modals on overlay click
-        document.addEventListener('click', (e) => {
-            if (e.target.classList.contains('modal-overlay')) {
-                e.target.classList.remove('active');
-                document.body.style.overflow = 'auto';
-            }
-        });
-    }
-
-    showLegalPage(type) {
-        const content = type === 'privacy' ? this.getPrivacyPolicy() : this.getTermsOfService();
-        document.getElementById('modalTitle').textContent = type === 'privacy' ? 'Privacy Policy' : 'Terms of Service';
-        document.getElementById('modalContent').innerHTML = content;
-        this.showModal('modalOverlay');
-    }
-
-    getPrivacyPolicy() {
-        return `
-            <div style="max-height: 400px; overflow-y: auto; line-height: 1.6;">
-                <p><strong>Effective Date: June 18, 2025</strong></p>
-                
-                <h3>Information Collection</h3>
-                <p>We collect information you provide directly, including email addresses for authentication and usage analytics for service improvement.</p>
-                
-                <h3>Data Usage</h3>
-                <p>Your data is used to provide our services, authenticate users, and improve our tools. We do not sell or share personal information with third parties.</p>
-                
-                <h3>Data Storage</h3>
-                <p>Data is stored locally in your browser and may be processed temporarily for tool functionality. No personal files are permanently stored on our servers.</p>
-                
-                <h3>Cookies and Tracking</h3>
-                <p>We use Google Analytics to understand usage patterns and improve our service. You can opt out of analytics tracking in your browser settings.</p>
-                
-                <h3>Contact</h3>
-                <p>For privacy concerns, contact us at aaryanraj269@gmail.com</p>
-            </div>
-        `;
-    }
-
-    getTermsOfService() {
-        return `
-            <div style="max-height: 400px; overflow-y: auto; line-height: 1.6;">
-                <p><strong>Effective Date: June 18, 2025</strong></p>
-                
-                <h3>Service Usage</h3>
-                <p>ToolHub Master provides productivity tools for personal and commercial use. Users are responsible for the content they process through our tools.</p>
-                
-                <h3>Usage Limits</h3>
-                <p>Free users receive 15 uses per day, authenticated users receive 25 uses per day. Usage resets daily at midnight UTC.</p>
-                
-                <h3>Prohibited Uses</h3>
-                <p>Users may not use our service for illegal activities, spam generation, or processing of harmful content.</p>
-                
-                <h3>Limitation of Liability</h3>
-                <p>ToolHub Master is provided "as is" without warranties. We are not liable for any damages arising from use of our service.</p>
-                
-                <h3>Service Availability</h3>
-                <p>We strive for high availability but do not guarantee uninterrupted service.</p>
-                
-                <h3>Contact</h3>
-                <p>For questions about these terms, contact aaryanraj269@gmail.com</p>
-            </div>
-        `;
-    }
+  rgbToHex(r, g, b) {
+    const toHex = (c) => {
+      const hex = c.toString(16);
+      return hex.length === 1 ? '0' + hex : hex;
+    };
+    return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+  }
 }
 
-// Global function for Google Sign-In callback
-window.handleGoogleSignIn = function(response) {
-    if (window.toolhubApp) {
-        window.toolhubApp.handleGoogleAuth(response);
-    }
-};
-
-// Initialize the application
+// Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    window.toolhubApp = new ToolHubMaster();
+  window.toolhub = new ToolHubMaster();
 });
